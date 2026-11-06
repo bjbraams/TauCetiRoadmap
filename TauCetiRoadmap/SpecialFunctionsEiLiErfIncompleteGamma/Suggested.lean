@@ -28,7 +28,7 @@ noncomputable section
 namespace TauCetiRoadmap.SpecialFunctionsEiLiErfIncompleteGamma
 
 open Complex Filter Topology Asymptotics Set MeasureTheory Finset
-open scoped Real Nat
+open scoped Real Nat ComplexConjugate
 
 /-- The logarithmic-coordinate filter "`z = exp w → ∞` in `|ph z| ≤ θ`", for any `θ > 0`. -/
 local notation "logSectorAtTop " θ =>
@@ -89,10 +89,15 @@ end Complex
 def faddeeva (z : ℂ) : ℂ :=
   cexp (-z ^ 2) * Complex.erfc (-I * z)
 
-/-- Dawson's integral `F(z) = e^{−z²} ∫₀^z e^{t²} dt` (DLMF 7.2.5), with the body of the
-parabolic cylinder roadmap's `TauCeti.dawson`. -/
+/-- Dawson's integral `F(z) = e^{−z²} ∫₀^z e^{t²} dt` (DLMF 7.2.5), owned here (Milestone 11.6)
+and consumed by the parabolic cylinder roadmap. -/
 def dawson (z : ℂ) : ℂ :=
   cexp (-z ^ 2) * ∫ s in (0 : ℝ)..1, z * cexp (((s : ℂ) * z) ^ 2)
+
+/-- The repeated Gaussian integral `Hh_n(z) = ∫₀^∞ tⁿ/n! e^{−(z+t)²/2} dt` (DLMF 7.18.12), owned
+here (Milestone 11.6) and consumed by the parabolic cylinder roadmap. -/
+def repeatedGaussianIntegral (n : ℕ) (z : ℂ) : ℂ :=
+  ∫ t in Ioi (0 : ℝ), (t : ℂ) ^ n / (n ! : ℂ) * cexp (-(z + t) ^ 2 / 2)
 
 /-- The Fresnel integral `C(z) = ∫₀^z cos(πt²/2) dt` (DLMF 7.2.7). -/
 def fresnelC (z : ℂ) : ℂ :=
@@ -340,20 +345,74 @@ open Complex in
 theorem hasDerivAt_upperIncompleteGamma {z : ℂ} (hz : z ∈ slitPlane) (a : ℂ) :
     HasDerivAt (upperIncompleteGamma a) (-(z ^ (a - 1) * cexp (-z))) z := sorry
 
+open Complex in
+/-- **M3.3** The Mellin–Barnes integral DLMF 8.6.11 on the vertical line `Re s = c`, to the right
+of all poles of `Γ(s + a)/s`, with its absolute convergence. -/
+theorem upperIncompleteGamma_eq_mellinBarnes (a : ℂ) {z : ℂ} (hz : |arg z| < π / 2) {c : ℝ}
+    (hc : 0 < c) (hca : -a.re < c) :
+    Integrable (fun y : ℝ => Complex.Gamma ((c : ℂ) + y * I + a) * z ^ (-((c : ℂ) + y * I)) /
+      ((c : ℂ) + y * I)) ∧
+    upperIncompleteGamma a z = (2 * π : ℂ)⁻¹ * ∫ y : ℝ,
+      Complex.Gamma ((c : ℂ) + y * I + a) * z ^ (-((c : ℂ) + y * I)) / ((c : ℂ) + y * I) := sorry
+
 /-! ## Milestone 4: continued fractions and inequalities -/
 
-open Complex in
-/-- **M4.1** The continued fraction DLMF 8.9.2, as a Mathlib `GenContFract` with head `0`,
-partial numerators `z⁻¹, (1 − a)z⁻¹, z⁻¹, (2 − a)z⁻¹, 2z⁻¹, …` and partial denominators `1`. -/
-theorem tendsto_convs_upperIncompleteGamma (a : ℂ) {z : ℂ} (hz : z ∈ slitPlane) :
-    Tendsto
-      (⟨0, Stream'.Seq.ofStream fun n : ℕ =>
-        ⟨(if n = 0 then 1 else if Odd n then (((n + 1) / 2 : ℕ) : ℂ) - a
-          else ((n / 2 : ℕ) : ℂ)) * z⁻¹, 1⟩⟩ : GenContFract ℂ).convs
-      atTop (𝓝 (z ^ (-a) * cexp z * upperIncompleteGamma a z)) := sorry
+/-- `y` solves the three-term recurrence `y(n + 1) = b n · y(n) + a n · y(n − 1)` for `n ≥ 1`
+(Milestone 4.1). -/
+def IsRecurrenceSolution (a b y : ℕ → ℂ) : Prop :=
+  ∀ n, 1 ≤ n → y (n + 1) = b n * y n + a n * y (n - 1)
+
+/-- A minimal solution: nonzero, and `o(u)` for every solution `u` that is not a multiple of
+it, each such `u` being eventually nonzero. -/
+def IsMinimalSolution (a b f : ℕ → ℂ) : Prop :=
+  IsRecurrenceSolution a b f ∧ f ≠ 0 ∧
+    ∀ u, IsRecurrenceSolution a b u → (¬ ∃ c : ℂ, u = c • f) →
+      (∀ᶠ n in atTop, u n ≠ 0) ∧ Tendsto (fun n => f n / u n) atTop (𝓝 0)
+
+/-- The continued fraction `a₁/(b₁ + a₂/(b₂ + ⋯))`, a `GenContFract` with head `0`. -/
+def contFrac (a b : ℕ → ℂ) : GenContFract ℂ :=
+  ⟨0, Stream'.Seq.ofStream fun n => ⟨a (n + 1), b (n + 1)⟩⟩
+
+/-- **M4.1** The determinant formula for the continuants. -/
+theorem nums_mul_dens_sub (a b : ℕ → ℂ) (n : ℕ) :
+    (contFrac a b).nums (n + 1) * (contFrac a b).dens n -
+        (contFrac a b).nums n * (contFrac a b).dens (n + 1) =
+      (-1) ^ n * ∏ j ∈ Icc 1 (n + 1), a j := sorry
+
+/-- **M4.1** The reduction-of-order criterion for minimality. -/
+theorem isMinimalSolution_iff {a b f : ℕ → ℂ} (ha : ∀ n, 1 ≤ n → a n ≠ 0)
+    (hf : IsRecurrenceSolution a b f) {N : ℕ} (hfN : ∀ n, N ≤ n → f n ≠ 0) :
+    IsMinimalSolution a b f ↔
+      Tendsto (fun n => ‖∑ m ∈ Ico N n, (-1) ^ m * (∏ j ∈ Icc 1 m, a j) / (f m * f (m + 1))‖)
+        atTop atTop := sorry
+
+/-- **M4.1** Pincherle's theorem (Gautschi 1967, Theorem 1.1): convergence, with eventually
+nonzero denominators, is equivalent to a minimal solution that is nonzero at `0`. -/
+theorem pincherle {a b : ℕ → ℂ} (ha : ∀ n, 1 ≤ n → a n ≠ 0) :
+    (∃ v, (∀ᶠ n in atTop, (contFrac a b).dens n ≠ 0) ∧
+        Tendsto (contFrac a b).convs atTop (𝓝 v)) ↔
+      ∃ f, IsMinimalSolution a b f ∧ f 0 ≠ 0 := sorry
+
+/-- **M4.1** The value given by a minimal solution. -/
+theorem tendsto_convs_of_isMinimalSolution {a b f : ℕ → ℂ} (ha : ∀ n, 1 ≤ n → a n ≠ 0)
+    (hf : IsMinimalSolution a b f) (hf0 : f 0 ≠ 0) :
+    (∀ᶠ n in atTop, (contFrac a b).dens n ≠ 0) ∧
+      Tendsto (contFrac a b).convs atTop (𝓝 (-(f 1 / f 0))) := sorry
 
 open Complex in
-/-- **M4.2** DLMF 8.10.1. -/
+/-- **M4.2** The continued fraction DLMF 8.9.2, with partial numerators
+`z⁻¹, (1 − a)z⁻¹, z⁻¹, (2 − a)z⁻¹, 2z⁻¹, …` and partial denominators `1`; for `a ∈ ℤ_{>0}` it
+terminates and is stated separately. -/
+theorem tendsto_convs_upperIncompleteGamma {a : ℂ} (ha : ∀ n : ℕ, a ≠ n + 1) {z : ℂ}
+    (hz : z ∈ slitPlane) :
+    (∀ᶠ n in atTop, (contFrac (fun n => if n = 1 then z⁻¹ else if Even n then
+          (((n / 2 : ℕ) : ℂ) - a) * z⁻¹ else ((n / 2 : ℕ) : ℂ) * z⁻¹) fun _ => 1).dens n ≠ 0) ∧
+      Tendsto (contFrac (fun n => if n = 1 then z⁻¹ else if Even n then
+          (((n / 2 : ℕ) : ℂ) - a) * z⁻¹ else ((n / 2 : ℕ) : ℂ) * z⁻¹) fun _ => 1).convs
+        atTop (𝓝 (z ^ (-a) * cexp z * upperIncompleteGamma a z)) := sorry
+
+open Complex in
+/-- **M4.3** DLMF 8.10.1. -/
 theorem upperIncompleteGamma_bound {a x : ℝ} (ha : 0 < a) (ha1 : a ≤ 1) (hx : 0 < x) :
     x ^ (1 - a) * Real.exp x * (upperIncompleteGamma a x).re ≤ 1 := sorry
 
@@ -367,6 +426,15 @@ theorem upperIncompleteGammaLog_isBigO (a : ℂ) (n : ℕ) {δ : ℝ} (hδ : 0 <
         ∑ k ∈ range n, (descPochhammer ℂ k).eval (a - 1) * cexp (-(k * w)))
       =O[logSectorAtTop (3 * π / 2 - δ)] fun w => cexp (-(n * w)) := sorry
 
+open Complex in
+/-- **M5.2** The second relation of DLMF 8.11.5, with `(z/a)^a` written through the difference
+of principal logarithms. -/
+theorem regularizedGamma_isEquivalent {z : ℂ} (hz : z ≠ 0) {δ : ℝ} (hδ : 0 < δ) :
+    (fun a => regularizedGamma a z) ~[Bornology.cobounded ℂ ⊓
+        𝓟 (Set.ofPred fun a : ℂ => |arg a| ≤ π - δ)]
+      fun a => cexp (a - z + a * (Complex.log z - Complex.log a) - Complex.log a / 2) /
+        (Real.sqrt (2 * π) : ℂ) := sorry
+
 /-! ## Milestone 7: the generalized exponential integral -/
 
 /-- **M7.1** DLMF 8.19.3. -/
@@ -376,6 +444,17 @@ theorem expIntegralE_eq_integral (p : ℂ) {z : ℂ} (hz : 0 < z.re) :
 /-- **M7.2** DLMF 8.19.12. -/
 theorem expIntegralE_add_one (p : ℂ) {z : ℂ} (hz : z ∈ slitPlane) :
     p * expIntegralE (p + 1) z + z * expIntegralE p z = cexp (-z) := sorry
+
+open Classical in
+/-- **M7.6** DLMF 8.20.6 as a normalized remainder, `p → +∞` through real values, uniformly for
+`λ ≥ 0`, with `E_p(0)` the continuous extension `1/(p − 1)` and `A_k` from DLMF 8.20.4. -/
+theorem expIntegralE_large_order_isBigO (A : ℕ → Polynomial ℝ) (hA0 : A 0 = 1)
+    (hA : ∀ k : ℕ, A (k + 1) = (1 - 2 * (k : Polynomial ℝ) * Polynomial.X) * A k +
+      Polynomial.X * (Polynomial.X + 1) * Polynomial.derivative (A k)) (n : ℕ) :
+    (fun q : ℝ × ℝ => cexp ((q.2 * q.1 : ℝ) : ℂ) * (((q.2 + 1) * q.1 : ℝ) : ℂ) *
+          Function.update (expIntegralE (q.1 : ℂ)) 0 ((q.1 : ℂ) - 1)⁻¹ ((q.2 * q.1 : ℝ) : ℂ) -
+        ((∑ k ∈ range n, (A k).eval q.2 / ((q.2 + 1) ^ (2 * k) * q.1 ^ k) : ℝ) : ℂ))
+      =O[atTop ×ˢ 𝓟 (Ici 0)] fun q => (q.1 ^ n)⁻¹ := sorry
 
 /-- **M7.3** DLMF 8.19.18. -/
 theorem expIntegralELog_add_two_pi_mul_I {p : ℂ} (hp : ∀ n : ℕ, p ≠ n + 1) (w : ℂ) (m : ℤ) :
@@ -410,9 +489,20 @@ theorem expIntegralEi_isBigO (n : ℕ) :
     (fun x => x * Real.exp (-x) * Real.expIntegralEi x - ∑ k ∈ range n, (k ! : ℝ) / x ^ k)
       =O[atTop] fun x => (x ^ n)⁻¹ := sorry
 
-/-- **M8.5** DLMF 6.13.1: the unique positive zero of `Ei`, to ten digits. -/
+/-- **M8.2** `Ei′(x) = eˣ/x` for `x ≠ 0`. -/
+theorem hasDerivAt_expIntegralEi {x : ℝ} (hx : x ≠ 0) :
+    HasDerivAt Real.expIntegralEi (Real.exp x / x) x := sorry
+
+/-- **M8.2** `Ei` is strictly increasing on `(0, ∞)`. -/
+theorem strictMonoOn_expIntegralEi : StrictMonoOn Real.expIntegralEi (Ioi 0) := sorry
+
+/-- **M8.5** DLMF 6.13.1: `Ei` has exactly one positive zero. -/
 theorem existsUnique_expIntegralEi_eq_zero :
-    ∃! x : ℝ, 0 < x ∧ Real.expIntegralEi x = 0 ∧ 0.3725074107 < x ∧ x < 0.3725074108 := sorry
+    ∃! x : ℝ, 0 < x ∧ Real.expIntegralEi x = 0 := sorry
+
+/-- **M8.5** The positive zero of `Ei`, to ten digits. -/
+theorem expIntegralEi_eq_zero_bounds {x : ℝ} (hx : 0 < x) (h : Real.expIntegralEi x = 0) :
+    0.3725074107 < x ∧ x < 0.3725074108 := sorry
 
 /-! ## Milestone 9: sine and cosine integrals -/
 
@@ -483,6 +573,23 @@ theorem fresnelC_ofReal_im (x : ℝ) : (fresnelC x).im = 0 := sorry
 theorem tendsto_fresnelC_atTop : Tendsto (fun x : ℝ => (fresnelC x).re) atTop (𝓝 (1 / 2)) :=
   sorry
 
+/-- **M11.6** `F′ = 1 − 2zF`. -/
+theorem hasDerivAt_dawson (z : ℂ) : HasDerivAt dawson (1 - 2 * z * dawson z) z := sorry
+
+/-- **M11.6** `Hh_{n+1}′ = −Hh_n`. -/
+theorem hasDerivAt_repeatedGaussianIntegral_succ (n : ℕ) (z : ℂ) :
+    HasDerivAt (repeatedGaussianIntegral (n + 1)) (-repeatedGaussianIntegral n z) z := sorry
+
+/-- **M11.6** `(n + 2) Hh_{n+2}(z) = Hh_n(z) − z Hh_{n+1}(z)`. -/
+theorem repeatedGaussianIntegral_add_two (n : ℕ) (z : ℂ) :
+    (n + 2 : ℂ) * repeatedGaussianIntegral (n + 2) z =
+      repeatedGaussianIntegral n z - z * repeatedGaussianIntegral (n + 1) z := sorry
+
+/-- **M11.6** `Hh_n(0) = 2^{(n−1)/2} Γ((n + 1)/2)/n!`. -/
+theorem repeatedGaussianIntegral_zero (n : ℕ) :
+    repeatedGaussianIntegral n 0 =
+      ((2 ^ (((n : ℝ) - 1) / 2) * Real.Gamma (((n : ℝ) + 1) / 2) / (n ! : ℝ) : ℝ) : ℂ) := sorry
+
 /-! ## Milestone 12: integral representations, inequalities and integrals of error functions -/
 
 /-- **M12.1** DLMF 7.7.2. -/
@@ -509,7 +616,76 @@ open Complex in
 theorem infinite_erf_zeros_firstQuadrant :
     (Set.ofPred fun z : ℂ => erf z = 0 ∧ 0 < z.re ∧ 0 < z.im).Infinite := sorry
 
+open Complex in
+/-- **M13.3** The zeros of `erf`: an enumeration by increasing modulus of the zeros in the open
+first quadrant (`z 0` is DLMF's `z₁`), which with `0` and the images under `z ↦ −z`, `z ↦ z̄`
+covers the whole zero set. -/
+theorem exists_erf_zero_enumeration :
+    ∃ z : ℕ → ℂ, Function.Injective z ∧ Monotone (fun n => ‖z n‖) ∧
+      Set.range z = Set.ofPred (fun ζ : ℂ => erf ζ = 0 ∧ 0 < ζ.re ∧ 0 < ζ.im) ∧
+      ∀ ζ : ℂ, erf ζ = 0 ↔
+        ζ = 0 ∨ ∃ n, ζ = z n ∨ ζ = -z n ∨ ζ = conj (z n) ∨ ζ = -conj (z n) := sorry
+
+open Complex in
+/-- **M13.3** DLMF 7.13.1 for the real parts, with logarithmic weights, for every enumeration by
+increasing modulus; `λ = √((n − 1/8)π)` and `μ = ln(λ√(2π))` at DLMF's index `n + 1`. -/
+theorem erf_zero_re_isBigO (z : ℕ → ℂ) (hinj : Function.Injective z)
+    (hmono : Monotone (fun n => ‖z n‖))
+    (hrange : Set.range z = Set.ofPred (fun ζ : ℂ => erf ζ = 0 ∧ 0 < ζ.re ∧ 0 < ζ.im))
+    (lam mu : ℕ → ℝ) (hlam : ∀ n, lam n = Real.sqrt ((n + 1 - 1 / 8) * π))
+    (hmu : ∀ n, mu n = Real.log (lam n * Real.sqrt (2 * π))) :
+    (fun n => (z n).re -
+        (lam n - mu n / (4 * lam n) + (1 - mu n + mu n ^ 2 / 2) / (16 * lam n ^ 3)))
+      =O[atTop] fun n => (1 + |mu n|) ^ 3 / lam n ^ 5 := sorry
+
+open Complex in
+/-- **M13.5** DLMF 8.11.10 as a normalized remainder, `x = a + (2a)^{1/2} y`, uniformly for
+`y ∈ [−Y, Y]`. -/
+theorem regularizedGamma_transition_isBigO (Y : ℝ) :
+    (fun q : ℝ × ℝ =>
+      regularizedGamma ((q.1 : ℂ) + 1) ((q.1 + Real.sqrt (2 * q.1) * q.2 : ℝ) : ℂ) -
+        ((1 / 2 * TauCeti.Real.erfc (-q.2) -
+          1 / 3 * Real.sqrt (2 / (π * q.1)) * (1 + q.2 ^ 2) * Real.exp (-q.2 ^ 2) : ℝ) : ℂ))
+      =O[atTop ×ˢ 𝓟 (Icc (-Y) Y)] fun q => q.1⁻¹ := sorry
+
+open Complex in
+/-- **M13.5** DLMF 8.11.11 as a normalized remainder, `x = a + (2a)^{1/2} y`, uniformly for
+`y ∈ [−Y, Y]`; `F` is Dawson's integral. -/
+theorem tricomiIncompleteGamma_transition_isBigO (Y : ℝ) :
+    (fun q : ℝ × ℝ =>
+      ((q.1 + Real.sqrt (2 * q.1) * q.2 : ℝ) : ℂ) ^ (1 - (q.1 : ℂ)) *
+          tricomiIncompleteGamma (1 - (q.1 : ℂ)) (-((q.1 + Real.sqrt (2 * q.1) * q.2 : ℝ) : ℂ)) +
+        (Real.cos (π * q.1) : ℂ) -
+        ((Real.sin (π * q.1) / π : ℝ) : ℂ) *
+          (2 * (Real.sqrt π : ℂ) * dawson (q.2 : ℂ) +
+            ((2 / 3 * Real.sqrt (2 * π / q.1) * (1 - q.2 ^ 2) : ℝ) : ℂ)) *
+          (Real.exp (q.2 ^ 2) : ℂ))
+      =O[atTop ×ˢ 𝓟 (Icc (-Y) Y)] fun q => q.1⁻¹ := sorry
+
 /-! ## Milestone 14: inverse error functions, repeated integrals, Voigt functions -/
+
+/-- **M14.1** DLMF 7.17.3–7.17.6 with logarithmic weights: the remainder after `N ≤ 5` terms is
+`O(u^{N−1/2}(1 + |v|)^N)` as `x → 0+`. -/
+theorem erfInv_one_sub_isBigO (u v : ℝ → ℝ)
+    (hu : u = fun x => -2 / Real.log (π * x ^ 2 * Real.log (1 / x)))
+    (hv : v = fun x => Real.log (Real.log (1 / x)) - 2 + Real.log π)
+    (c : ℕ → ℝ → ℝ) (hc0 : ∀ w, c 0 w = 1) (hc1 : ∀ w, c 1 w = 0) (hc2 : ∀ w, c 2 w = w / 8)
+    (hc3 : ∀ w, c 3 w = -(w ^ 2 + 6 * w - 6) / 32)
+    (hc4 : ∀ w, c 4 w = (4 * w ^ 3 + 27 * w ^ 2 + 108 * w - 300) / 384) {N : ℕ} (hN : N ≤ 5) :
+    (fun x => Real.erfInv (1 - x) - ∑ j ∈ range N, c j (v x) * u x ^ ((j : ℝ) - 1 / 2))
+      =O[𝓝[>] 0] fun x => u x ^ ((N : ℝ) - 1 / 2) * (1 + |v x|) ^ N := sorry
+
+/-- **M14.2** `i⁰ erfc = erfc`. -/
+theorem iteratedErfc_zero : iteratedErfc 0 = Complex.erfc := sorry
+
+/-- **M14.2** DLMF 7.18.4: `(iⁿ⁺¹ erfc)′ = −iⁿ erfc`. -/
+theorem hasDerivAt_iteratedErfc (n : ℕ) (z : ℂ) :
+    HasDerivAt (iteratedErfc (n + 1)) (-iteratedErfc n z) z := sorry
+
+/-- **M14.2** DLMF 7.18.12, the scaling between `iⁿ erfc` and `Hh_n`. -/
+theorem iteratedErfc_eq_repeatedGaussianIntegral (n : ℕ) (z : ℂ) :
+    iteratedErfc n z = ((Real.sqrt (2 ^ ((n : ℝ) - 1) * π))⁻¹ : ℂ) *
+      repeatedGaussianIntegral n ((Real.sqrt 2 : ℂ) * z) := sorry
 
 /-- **M14.1** DLMF 7.17.2–7.17.2_5: `erfInv x = ∑ a_m t^{2m+1}` with `t = √π x/2` for
 `|x| < 1`, where `a` is the recursion of DLMF 7.17.2_5. -/
@@ -548,5 +724,14 @@ theorem regularizedIncompleteBeta_natCast {m n : ℕ} (hm : 0 < m) (hmn : m ≤ 
     (hx0 : 0 ≤ x) (hx1 : x < 1) :
     TauCeti.regularizedIncompleteBeta m (n - m + 1) x =
       ∑ j ∈ Icc m n, (n.choose j : ℝ) * x ^ j * (1 - x) ^ (n - j) := sorry
+
+/-- **M15.5** DLMF 8.18.1 as a normalized remainder, `a → +∞` with `b > 0` and `0 < x < 1`
+fixed; `(Real.Gamma (b - k))⁻¹` is `0` at the poles, as for the entire reciprocal. -/
+theorem regularizedIncompleteBeta_large_a_isBigO {b x : ℝ} (hb : 0 < b) (hx0 : 0 < x)
+    (hx1 : x < 1) (n : ℕ) :
+    (fun a : ℝ => Real.Gamma (a + n + 1) *
+      (TauCeti.regularizedIncompleteBeta a b x / (Real.Gamma (a + b) * x ^ a * (1 - x) ^ (b - 1)) -
+        ∑ k ∈ range n, (x / (1 - x)) ^ k * (Real.Gamma (a + k + 1))⁻¹ * (Real.Gamma (b - k))⁻¹))
+      =O[atTop] fun _ => (1 : ℝ) := sorry
 
 end TauCetiRoadmap.SpecialFunctionsEiLiErfIncompleteGamma

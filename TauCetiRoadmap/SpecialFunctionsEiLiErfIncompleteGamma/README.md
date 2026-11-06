@@ -27,7 +27,8 @@ The roadmap covers:
 - the Gibbs phenomenon.
 
 Chapter 8 is the base: Chapter 6 is the case `E₁ = Γ(0, ·)`, and Chapter 7 is the case
-`erf z = π^{−1/2} γ(½, z²)`. Milestones 1–6 use nothing from Chapters 6 and 7. The Chapter 8
+`erf z = z γ*(½, z²)` of Tricomi's entire function (equivalently `erf z = π^{−1/2} γ(½, z²)` for
+`Re z > 0`, where `(z²)^{1/2} = z`). Milestones 1–6 use nothing from Chapters 6 and 7. The Chapter 8
 formulas that involve `E₁`, `erf`, `erfc` or Dawson's integral are placed after those functions,
 in Milestones 7, 11 and 13.
 
@@ -73,17 +74,17 @@ The roadmap is complete when Tau Ceti proves all of the following.
 9. **Sine and cosine integrals** (DLMF 6.2.9–6.2.21, 6.4.4–6.4.7, 6.5.3–6.5.7, 6.6.5–6.6.6,
    6.7.9–6.7.14, 6.12.3–6.12.8, 6.13.2, 6.14.2–6.14.3, 6.14.5–6.14.7, 6.15.1–6.15.4,
    6.16.1–6.16.4).
-10. **Generalized sine and cosine integrals** (DLMF 8.21.1–8.21.27).
+10. **Generalized sine and cosine integrals** (DLMF 8.21.1–8.21.15, 8.21.18–8.21.27).
 11. **Error functions, Dawson's and Fresnel integrals** (DLMF 7.2.1–7.2.12, 7.4.1–7.4.8,
     7.5.1–7.5.13, 7.6.1–7.6.7, 7.10.1–7.10.4, 7.11.1–7.11.4, 7.11.6–7.11.8, and 8.4.1, 8.4.3,
-    8.4.6, 8.4.14).
+    8.4.6, 8.4.14), with the repeated Gaussian integrals `Hh_n` and their basic API.
 12. **Integral representations, inequalities, continued fractions and integrals of the error
     functions** (DLMF 7.7.1–7.7.16, 7.8.1–7.8.8, 7.9.1–7.9.3, 7.14.1–7.14.8).
 13. **Asymptotics and zeros of the error functions** (DLMF 7.12.1–7.12.7, §7.13 with
     7.13.1–7.13.7), and the incomplete Gamma functions near the transition point
     (DLMF 8.11.10–8.11.11).
 14. **Inverse error functions, repeated integrals and Voigt functions** (DLMF 7.17.1–7.17.6,
-    7.18.1–7.18.9, 7.18.13–7.18.14, 7.19.1–7.19.11).
+    7.18.1–7.18.9, 7.18.12–7.18.14, 7.19.1–7.19.11).
 15. **Incomplete Beta functions** (DLMF 8.17.1–8.17.24 with 8.17.9 for `0 ≤ x < ½`, and 8.18.1).
 
 **What this roadmap owns:** the functions and formulas listed above, with the hypotheses and
@@ -92,9 +93,12 @@ the milestones need and which neither Mathlib nor Tau Ceti provides:
 
 | Result | Milestone |
 |---|---|
-| Pincherle's theorem: a continued fraction whose three-term recurrence has a minimal solution converges to the ratio fixed by that solution | 4.1 |
+| Pincherle's theorem: a continued fraction converges if and only if its three-term recurrence has a minimal solution `f` with `f(0) ≠ 0`, and its value is `−f(1)/f(0)` | 4.1 |
+| The reduction-of-order criterion for minimality, and the determinant formula for the continuants | 4.1 |
+| Explicit minimal solutions for the recurrences of 8.9.1, 8.9.2, 7.18.13 and 8.17.22 | 4.2, 14.2, 15.4 |
 | `∫₀^∞ e^{−zt} t^{s−1}/(1 + t) dt` and `∫₀^∞ e^{−zt}(1 + t)^{a−1} dt` as Laplace transforms in a sector | 3.1 |
 | The circle form of Hankel's loop integral for `γ(a, z)` | 3.2 |
+| Dawson's integral `TauCeti.dawson` and the repeated Gaussian integrals `Hh_n = TauCeti.repeatedGaussianIntegral n`, with their basic API | 11.6 |
 
 **What this roadmap does not own:**
 - **The real functions Tau Ceti already has:** `TauCeti.lowerIncompleteGamma`,
@@ -110,8 +114,13 @@ the milestones need and which neither Mathlib nor Tau Ceti provides:
   Kummer's second function `U`, Whittaker functions, modified and spherical Bessel functions,
   Laguerre polynomials, Chebyshev expansions, the continued Gauss function `₂F₁` and the Hurwitz
   zeta function at complex shift.
-- **The uniform asymptotic expansions for large parameter** (DLMF §8.12 and §8.18(ii)), and
-  exponentially improved expansions.
+- **The uniform asymptotic expansions of DLMF §8.12 and §8.18(ii)**, which rest on the
+  coalescence of a saddle point with a pole, and exponentially improved expansions. The
+  large-parameter statements that this roadmap does own are listed with their uniformity:
+  8.11.6–8.11.7 (uniform for `λ` in compact subsets, Milestone 5.3), 8.11.18 (uniform for
+  `x ≤ 1 − δ`, Milestone 5.4), 8.20.6 (uniform for `λ ∈ [0, ∞)`, Milestone 7.6), 8.11.10–8.11.11
+  (uniform for `y` in compact subsets, Milestone 13.5) and 8.18.1 (fixed `b` and `x`,
+  Milestone 15.5).
 - **Numerical tables and methods of computation.**
 
 ## Ownership and dependencies
@@ -121,14 +130,22 @@ the milestones need and which neither Mathlib nor Tau Ceti provides:
   - Milestone 1: asymptotic scales, Poincaré and generalized expansions, uniform expansions.
   - Milestone 2: transcendental equations and reversion, for the zeros.
   - Milestone 3: integration by parts and Watson's lemma on the real line.
-  - Milestone 4: Watson's lemma in sectors and the rotation of the path.
+  - Milestone 4: Watson's lemma in sectors, and the rotation of the path (4.3), including its
+    gluing of the rotated transforms in logarithmic coordinates across `|ph z| ≥ π`.
   - Milestone 5: Laplace's method.
-  - Milestone 8: Mellin inversion and the shifting of the line, for the Mellin–Barnes integrals.
-  - Milestone 12: three-term recurrences, for the minimal solutions in Pincherle's theorem.
+  - Milestone 8: Mellin inversion, the shifting of the line with residues, the pole-separated
+    bound for `Γ` on vertical strips (8.6) and the exponential Mellin inversion (8.7), for the
+    Mellin–Barnes integrals.
+  - Milestone 12.1: difference equations whose coefficients have limits with distinct
+    characteristic roots, for the growth of the minimal solution of the incomplete Beta fraction
+    8.17.22 (Milestone 15.4). The incomplete Gamma and error-function fractions have coefficients
+    that grow with the index, outside that theorem; their minimal solutions are explicit
+    (Milestones 4.2 and 14.2), and minimality is proved by the criterion of Milestone 4.1.
 - **[ZerosOfLFunctions §1.2](../ZerosOfLFunctions/README.md#12-stirling-on-the-sector)**
   supplies complex Stirling in `|ph a| ≤ π − δ` (for DLMF 8.11.5).
   **[§1.3](../ZerosOfLFunctions/README.md#13-vertical-strips)** supplies the decay of `Γ` on
-  vertical lines (for the Mellin–Barnes integrals). Neither is restated here.
+  vertical lines, consumed through the pole-separated bound of AsymptoticExpansions 8.6 (for
+  the Mellin–Barnes integrals). Neither is restated here.
 - **[StandardDistributions](../StandardDistributions/README.md) Layer 2** owns the real
   incomplete Gamma, incomplete Beta and error functions and the closed-form cdfs. **Layer 8.4**
   owns their inverses. These are implemented in Tau Ceti and consumed here.
@@ -137,11 +154,13 @@ the milestones need and which neither Mathlib nor Tau Ceti provides:
   relates it to DLMF's `li` by one identity.
 - **[ContourIntegration](../../Completed/ContourIntegration/README.md)** owns residues
   (`TauCeti.Contour.residue`), consumed in the Mellin–Barnes integrals.
-- **The parabolic cylinder roadmap** (`SpecialFunctionsParabolicCylinder`, an open pull request)
-  pins Dawson's integral as `TauCeti.dawson`, with the same definition as here. Whichever roadmap
-  is implemented first owns `TauCeti.dawson`, and the other consumes it. The relations of
-  `iⁿ erfc` to the parabolic cylinder functions (DLMF 7.18.11–7.18.12) are recorded under
-  [Beyond this roadmap](#beyond-this-roadmap-a-roadmap-for-a-roadmap-do-not-implement).
+- **[SpecialFunctionsParabolicCylinder](../SpecialFunctionsParabolicCylinder/README.md)**
+  consumes from this roadmap Dawson's integral `TauCeti.dawson`, the repeated Gaussian integrals
+  `Hh_n = TauCeti.repeatedGaussianIntegral n` with their basic API (Milestone 11.6), and the
+  complex `erf`, `erfc` and `w`. Both are Chapter 7 functions: `F` is DLMF 7.2.5, and `Hh_n` is
+  defined in DLMF 7.18.12. The identities with the parabolic cylinder functions `U` and `V`
+  (DLMF 12.7.1–12.7.7, among them `U(n + ½, z) = e^{z²/4} Hh_n(z)`) and their consequence 7.18.11
+  belong to that roadmap. Nothing in this roadmap depends on it.
 - **Mathlib** supplies:
   - `Complex.Gamma`, `Complex.digamma`, `Real.eulerMascheroniConstant` and
     `ProbabilityTheory.beta`;
@@ -155,9 +174,11 @@ the milestones need and which neither Mathlib nor Tau Ceti provides:
 
 **The boundary in one sentence:** this roadmap owns the complex theory of the functions of DLMF
 Chapters 6–8 and its real-variable consequences. It consumes the general asymptotic methods of
-AsymptoticExpansions and the existing real incomplete Gamma, Beta and error functions. It
-excludes formulas through functions of other chapters, uniform large-parameter expansions,
-exponentially improved expansions and numerical tables.
+AsymptoticExpansions and the existing real incomplete Gamma, Beta and error functions, and it
+supplies `dawson`, `Hh_n` and the complex error functions to the parabolic cylinder roadmap. It
+excludes formulas through functions of
+other chapters, the uniform expansions of §8.12 and §8.18(ii), exponentially improved
+expansions and numerical tables.
 
 ## Mathlib and Tau Ceti inventory
 
@@ -169,8 +190,10 @@ exponentially improved expansions and numerical tables.
   `ordinaryHypergeometric a b c x`, the Gauss series, with junk value `0` outside its disc of
   convergence.
 - **Mathlib pull request [#34053](https://github.com/leanprover-community/mathlib4/pull/34053)**
-  (real `erf`, `erfc`). It has had no substantive activity for more than six months and is prior
-  art only. Tau Ceti's `Erf.lean` follows its names.
+  (real `erf`, `erfc`), opened 2026-01-16, was open and unmerged when this inventory was taken
+  (2026-11-06). It is prior art only; Tau Ceti's `Erf.lean` follows its names. This inventory
+  comes from searches of Mathlib and its open pull requests, not from an exhaustive audit of
+  Zulip.
 - **Tau Ceti** has:
   - `TauCeti.Real.erf x = 2/√π ∫₀ˣ e^{−t²} dt` and `erfc = 1 − erf`, with parity, derivatives,
     monotonicity, limits and bounds; `Real.erfInv` and `Real.erfOrderIso`.
@@ -207,7 +230,7 @@ guidance. The following secondary provenance map records source counterparts (ch
 | 1. Definitions, continuation | `Statistical/Basic/IncompleteGamma`, `Confluent/Basic/IncompleteGamma`, `IncompleteGamma/Basic`, `IncompleteGamma/Regularized`, `IncompleteGamma/ContinuedProperties` |
 | 2. Values, series, recurrences | `IncompleteGamma/SpecialValues`, `IncompleteGamma/SeriesRecurrences` |
 | 3. Integral representations | `IncompleteGamma/Representations/{UpperBarnes, LowerBarnes}`, `IncompleteGamma/RealIntegrals`, `IncompleteGamma/ZerosIntegrals` |
-| 4. Fractions, inequalities | `IncompleteGamma/BoundsFractions`, `IncompleteGamma/BoundTools`, `IncompleteGamma/FractionTools` |
+| 4. Fractions, inequalities | `IncompleteGamma/BoundsFractions`, `IncompleteGamma/BoundTools`, `IncompleteGamma/FractionTools`; general tools in `DLMFMathlib/Analysis/ContinuedFraction/{Convergence, JacobiValueRegion, PositiveConvergence}` |
 | 5. Asymptotics | `IncompleteGamma/Asymptotics/{LargeArgument, PartialSums, Central}` |
 | 6. Zeros | `IncompleteGamma/ZerosIntegrals` |
 | 7. `E_p` | `Confluent/Basic/ExponentialIntegrals`, `IncompleteGamma/ExponentialIntegral`, `IncompleteGamma/ExpIntegralAsymptotics` |
@@ -219,6 +242,17 @@ guidance. The following secondary provenance map records source counterparts (ch
 | 14. Inverse, `iⁿ erfc`, Voigt | `ErrorFunctions/Basic/Inverse`, `ErrorFunctions/{InverseGeneralized, Repeated, Voigt}` |
 | 15. Incomplete Beta | `IncompleteGamma/Basic/IncompleteBeta`, `IncompleteGamma/{Beta, BetaContinuedFraction, BetaAsymptotics}` |
 
+The source contains both proved theorems and admitted statements. At the commit above, the
+following are admitted there and serve only as reference statements:
+`upperIncompleteGamma_continuedFraction_complex` (8.9.2), `expIntegralE_continuedFraction`
+(8.19.17), `tricomiIncompleteGamma_central_expansion` (8.11.11), `invErfc_asymptotic` (7.17.3)
+and `errorFunctionZero_asymptotic` (7.13.1, 7.13.3). The following have no `sorry` in their own
+proofs (their transitive dependencies were not audited): `genExpIntEExtended` with its value at
+`0` (`IncompleteGamma/ExponentialIntegral`),
+`regularizedGamma_large_parameter_equivalent` (8.11.5), `regularizedGamma_central_expansion`
+(8.11.10), `tricomiIncompleteGamma_continuedFraction` (8.9.1) and
+`incompleteBeta_continuedFraction` (8.17.22). Other files were not classified.
+
 ## Conventions (pinned)
 
 - **Namespaces.** The complex incomplete Gamma functions and the complex error functions live in
@@ -229,6 +263,7 @@ guidance. The following secondary provenance map records source counterparts (ch
 
   The other complex functions live in `TauCeti`: `faddeeva`, `dawson`, `fresnelC`, `fresnelS`,
   `fresnelTail` (`ℱ`), `fresnelAuxF`, `fresnelAuxG`, `goodwinStaton`, `iteratedErfc`,
+  `repeatedGaussianIntegral` (`Hh_n`),
   `expIntegralE`, `expIntegralELog`, `expIntegralEin`, `sinIntegral`, `sinIntegralTail` (`si`),
   `cosIntegral` (`Ci`), `cosIntegralCin`, `sinhIntegral`, `coshIntegral`, `sinIntegralAuxF`,
   `sinIntegralAuxG`, `generalizedSinIntegral` (`Si(a, z)`), `generalizedCosIntegral`,
@@ -320,8 +355,13 @@ def TauCeti.Real.principalLogIntegral (x : ℝ) : ℝ := expIntegralEi (Real.log
   `H_n(z) = 2^{n/2} He_n(√2 z)` with `He_n = Polynomial.hermite n` (probabilists'), written out.
   `e_n(z) = ∑_{k≤n} z^k/k!` (8.4.11) is written out as a `Finset` sum.
 - **Continued fractions** are Mathlib's `GenContFract ℂ` (or `ℝ`). The continued fraction
-  `b₀ + a₁/(b₁ + a₂/(b₂ + ⋯))` is `⟨b₀, Stream'.Seq.ofStream fun n => ⟨a (n+1), b (n+1)⟩⟩`, and its
-  convergence to `v` is `Tendsto g.convs atTop (𝓝 v)`. DLMF's prefactors stay outside.
+  `b₀ + a₁/(b₁ + a₂/(b₂ + ⋯))` is `⟨b₀, Stream'.Seq.ofStream fun n => ⟨a (n+1), b (n+1)⟩⟩`. Its
+  convergence to `v` is the conjunction of `∀ᶠ n in atTop, g.dens n ≠ 0` and
+  `Tendsto g.convs atTop (𝓝 v)`; the first conjunct excludes convergents that are division by
+  zero. DLMF's prefactors stay outside.
+- **`E_p` at `0`.** The definition gives the junk value `expIntegralE p 0 = 0` for `p ≠ 1`.
+  Where DLMF uses `E_p(0) = 1/(p − 1)` (`Re p > 1`), statements use the continuous extension
+  `Function.update (expIntegralE p) 0 (p − 1)⁻¹`, written out.
 - **Expansions** are stated with AsymptoticExpansions' `HasAsymptoticExpansion` and its written-out
   uniform and generalized forms. `Suggested.lean` writes them out as `IsBigO`, because that
   roadmap is not yet in Tau Ceti. Remainder bounds ("bounded by the first neglected term")
@@ -410,8 +450,10 @@ rectangles. Tau Ceti `IncompleteGamma.lean`.
 2. **Contour integrals** (DLMF 8.6.8–8.6.9). 8.6.8 for `z ≠ 0`, `a ∉ ℤ`, with the loop taken as
    the unit circle from `−1`:
    `γ(a, z) = z^a/(2 sin πa) ∫_{−π}^{π} e^{iaθ + z e^{iθ}} dθ`. 8.6.9 for `Re z > 0`,
-   `Re a > −1`, with the indented path taken as the ray `r e^{±iθ}`, `0 < θ < π/2 − |ph z|`, and
-   with the left side `upperIncompleteGammaLog (−a) (log z ± πi)`.
+   `Re a > −1`, with the indented path taken as the ray `t = r e^{±iθ}`, `r > 0`,
+   `0 < θ < π/2 − |ph z|` (same sign as on the left), which avoids the pole at `t = 1`, with
+   `t^a` the principal power on the ray, and with the left side
+   `upperIncompleteGammaLog (−a) (log z ± πi)`.
 3. **Mellin–Barnes integrals** (DLMF 8.6.10–8.6.12). Each is stated as an integral over the
    vertical line `Re s = c`, written as `(2π)⁻¹ ∫ y : ℝ, f(c + iy)`, for the parameters for which
    a straight line separates the poles as DLMF requires: 8.6.10 for `|ph z| < π/2`, `Re a > 0`
@@ -425,22 +467,61 @@ rectangles. Tau Ceti `IncompleteGamma.lean`.
    `Γ(s)⁻¹ ∫₀ˣ t^{s−1}/(e^t − 1) dt = ∑ k^{−s} P(s, kx)`, and its limit as `x → ∞` is
    `riemannZeta s`.
 
-*Needs:* Milestones 1–2; AsymptoticExpansions 4.3 (rotation of the path) and 8.1–8.2 (Mellin
-inversion and shifting the line); ZerosOfLFunctions §1.3; ContourIntegration residues;
+*Needs:* Milestones 1–2; AsymptoticExpansions 4.3 (rotation of the path), 8.1–8.2 (Mellin
+inversion and shifting the line) and 8.6–8.7 (`Γ` on vertical strips, exponential Mellin
+inversion); ContourIntegration residues;
 Mathlib `Complex.besselJ`, `ordinaryHypergeometric`, `circleIntegral`, `riemannZeta`.
 
 ## Milestone 4: continued fractions and inequalities
 
 1. **Pincherle's theorem** (Gautschi 1967, Theorem 1.1). Let `a n`, `b n` (`n ≥ 1`) be complex
    with every `a n ≠ 0`, and consider the recurrence `y(n + 1) = b n · y(n) + a n · y(n − 1)`
-   for `n ≥ 1`. A solution `f` is *minimal* when `f(n)/u(n) → 0` for every solution `u` not
-   proportional to `f`. Then the continued fraction `a₁/(b₁ + a₂/(b₂ + ⋯))` (a `GenContFract`
-   with head `0`) converges if and only if the recurrence has a minimal solution `f`, and its
-   value is then `−f(1)/f(0)`. With AsymptoticExpansions 12.1 this gives convergence whenever the
-   two characteristic solutions of the recurrence have different growth.
-2. **The incomplete Gamma fractions** (DLMF 8.9.1–8.9.2). 8.9.1 for `a ∉ −ℕ`, `a ≠ −1` and every
-   `z`. 8.9.2 for `z ∈ slitPlane`, from the minimal solution `Γ(a + n, z)` of 8.8.3 in the form
-   needed, each as convergence of a `GenContFract ℂ`.
+   (`n ≥ 1`) for `y : ℕ → ℂ`. A solution `f` is *minimal* when `f ≠ 0` and, for every solution
+   `u` that is not a scalar multiple of `f`, `u(n) ≠ 0` for all large `n` and `f(n)/u(n) → 0`.
+   Let `g` be the continued fraction `a₁/(b₁ + a₂/(b₂ + ⋯))`, a `GenContFract ℂ` with head `0`.
+   Prove:
+   - **the continuants:** with `A_n = g.nums n`, `B_n = g.dens n` and `A_{−1} = 1`,
+     `B_{−1} = 0`, the sequences `n ↦ A_{n−1}` and `n ↦ B_{n−1}` are the solutions with
+     `(y(0), y(1)) = (1, 0)` and `(0, 1)`, and `A_n B_{n−1} − A_{n−1} B_n = (−1)^{n−1} a₁⋯a_n`;
+   - **the Casoratian:** for solutions `f`, `u`, `W(n) = f(n)u(n + 1) − f(n + 1)u(n)` satisfies
+     `W(n) = (−1)ⁿ a₁⋯a_n W(0)`;
+   - **the reduction-of-order criterion:** a solution `f` with `f(n) ≠ 0` for `n ≥ N` is minimal
+     if and only if the partial sums of `∑_{m ≥ N} (−1)^m a₁⋯a_m/(f(m) f(m + 1))` tend to
+     infinity in modulus;
+   - **Pincherle:** `g` converges (in the sense of the conventions) if and only if the recurrence
+     has a minimal solution `f` with `f(0) ≠ 0`, and the value is then `−f(1)/f(0)`;
+   - **termination:** if `a_N = 0` for one `N` (the other `a_n` arbitrary) and
+     `B_n ≠ 0` for `n ≥ N − 1`, the convergents are constant from index `N − 1`.
+
+   A recurrence whose minimal solution has `f(0) = 0` gives a divergent fraction, for example
+   `a₁ = −1`, `b₁ = 1`, `a_n = −2`, `b_n = 3` (`n ≥ 2`), whose minimal solution is `0, 1, 1, …` and
+   whose convergents are `−(2ⁿ − 1)`.
+2. **The incomplete Gamma fractions** (DLMF 8.9.1–8.9.2), each as convergence of a
+   `GenContFract ℂ` via 4.1 with an explicit minimal solution.
+   - **8.9.2**, for `z ∈ slitPlane` and `a ∉ ℤ_{>0}`. The fraction has `b_n = 1`, `a₁ = 1/z`,
+     `a_{2k} = (k − a)/z` and `a_{2k+1} = k/z`. With
+     `K(c, d) = ∫₀^∞ e^{−zt} t^c (1 + t)^d dt` for `c ∈ ℕ` (defined for `Re z > 0` and continued
+     to `slitPlane` by rotating the ray, AsymptoticExpansions 4.3, as in 3.1), the minimal
+     solution with `f(0) = 1` is
+     `f(2k) = (1 − a)_k z^{−k} K(k − 1, a − 1 − k)` (`k ≥ 1`) and
+     `f(2k + 1) = −(1 − a)_k z^{−k} K(k, a − 1 − k)` (`k ≥ 0`), so that
+     `−f(1)/f(0) = K(0, a − 1) = z^{−a} e^z Γ(a, z)`. The recurrence follows from
+     `K(c, d) − K(c, d − 1) = K(c + 1, d − 1)` and the integration by parts
+     `z K(c, d) = c K(c − 1, d) + d K(c, d − 1)` (`c ≥ 1`; at `c = 0` the boundary term is `1`).
+     Minimality follows from the criterion of 4.1 and
+     `K(k, a − 1 − k) ∼ √π e^{z/2} z^{−a/2−1/4} k^{a/2−1/4} e^{−2√(kz)}` as `k → ∞`
+     (Laplace's method, AsymptoticExpansions 5). For `a ∈ ℤ_{>0}` the numerator `a_{2a}`
+     vanishes, and 8.9.2 is the finite identity given by the termination clause of 4.1.
+   - **8.9.1**, for `a ∉ {−1, −2, …}` and every `z`, with the fraction's head `0`, `b₁ = 1`,
+     `b_n = a + n − 1` (`n ≥ 2`), `a₁ = 1`, `a₂ = −z`, `a_{2k} = −(a + k − 1)z` (`k ≥ 2`) and
+     `a_{2k+1} = kz`. With `𝐌` as in the conventions and `d₁ = 1`,
+     `d_{2k} = (a + 1)_{k−1} (k − 1)!`, `d_{2k+1} = (a + 1)_{k−1} k!`, the minimal solution with
+     `f(0) = 1` is `f(n) = (−1)^{⌈n/2⌉} Γ(a + 1) zⁿ⁻¹ d_n 𝐌(⌈n/2⌉, a + n, z)` (`n ≥ 1`), so that
+     `−f(1)/f(0) = Γ(a + 1) 𝐌(1, a + 1, z) = Γ(a + 1) e^z γ*(a, z)`. The recurrence is a pair of
+     contiguous relations of `𝐌`, proved from the series. Minimality follows from the criterion
+     of 4.1 and `M(k, 2k + c, z) → e^{z/2}` as `k → ∞` for each fixed `c` (here `c = a` and
+     `c = a − 1`), with `M(α, β, ·) = Γ(β) 𝐌(α, β, ·)`, proved from the series. At `z = 0` the
+     fraction terminates.
 3. **Inequalities** (DLMF 8.10.1–8.10.13). For real parameters and `x > 0`, with `Γ(a, x)` and
    `γ(a, x)` the real parts of the complex functions:
    - 8.10.1–8.10.2 for `0 < a ≤ 1`, with the reversed inequalities for `a ≥ 1`;
@@ -452,8 +533,9 @@ Mathlib `Complex.besselJ`, `ordinaryHypergeometric`, `circleIntegral`, `riemannZ
    - 8.10.11–8.10.12 for `a > 0`, with equality only at `a = 1`;
    - 8.10.13 for `n ≥ 1`.
 
-*Needs:* Milestones 1–3; AsymptoticExpansions 12.1; Mathlib `GenContFract`, `GenContFract.convs`
-and the recurrences for its numerators and denominators (`GenContFract.convs_eq` family).
+*Needs:* Milestones 1–3 (3.1 for `K`); AsymptoticExpansions 5 (for the growth of `K`);
+Mathlib `GenContFract`, `GenContFract.convs`, `GenContFract.nums`, `GenContFract.dens` and the
+recurrences for the numerators and denominators.
 
 ## Milestone 5: asymptotics of the incomplete Gamma functions
 
@@ -465,8 +547,12 @@ and the recurrences for its numerators and denominators (`GenContFract.convs_eq`
    on 8.6.5, and 8.2.9 beyond `|ph z| ≤ π`.
 2. **Large `a`, fixed `z`** (DLMF 8.11.4–8.11.5). 8.11.4 as a convergent series for `a ∉ −ℕ`,
    and as a generalized asymptotic expansion as `a → ∞` in `|ph a| ≤ π − δ`, with respect to the
-   scale `|z|^k/|(a)_{k+1}|`. 8.11.5 in the same sector, both relations as asymptotic
-   equivalences, using complex Stirling.
+   scale `|z|^k/|(a)_{k+1}|`. 8.11.5 in the same sector for fixed `z ≠ 0`, both relations as
+   asymptotic equivalences along `Bornology.cobounded ℂ ⊓ 𝓟 {a | |arg a| ≤ π − δ}`, using complex
+   Stirling. In the second relation `(2πa)^{−1/2} e^{a−z} (z/a)^a` is written
+   `exp(a − z + a(log z − log a) − ½ log a)/√(2π)` with principal logarithms: the principal
+   power of the quotient `z/a` differs from it by a factor `e^{2πika}`, `k ∈ {−1, 0, 1}`, which
+   does not tend to `1`.
 3. **Large `a`, fixed `z/a`** (DLMF 8.11.6–8.11.9). With `b_k(λ)` the polynomials of
    8.11.8–8.11.9 and `z = λa`:
    - 8.11.6 for `0 < λ < 1` and `|ph a| ≤ π/2 − δ`;
@@ -492,12 +578,15 @@ Milestone 13.5.
    `a < 0` and `n ≥ 1`:
    - if `1 − 2n < a < 2 − 2n`, there is exactly one negative zero and no positive zero;
    - if `−2n < a < 1 − 2n`, there is exactly one negative zero `x₋(a)` and exactly one positive
-     zero `x₊(a)`.
+     zero `x₊(a)`;
+   - if `a = −n`, the only real zero is `x = 0`, of multiplicity `n` (from `γ*(−n, x) = xⁿ`).
+
    On `−1 < a < 0`, `x₋` is strictly decreasing and satisfies 8.13.1.
 2. **`a`-zeros** (DLMF §8.13(iii) (a)–(c)). For fixed real `x` and `n ≥ 1`:
    - for `x < 0`, `γ*(·, x)` has exactly two zeros in `−2n < a < 2 − 2n`;
-   - there is `x*_n > 0` such that for `0 < x ≤ x*_n` it has exactly two zeros (counted with
-     multiplicity) in `−2n < a < 1 − 2n`, and for `x > x*_n` none;
+   - there is `x*_n > 0` such that in `−2n < a < 1 − 2n` the function `γ*(·, x)` has exactly
+     two zeros, both simple, for `0 < x < x*_n`; exactly one zero, which is double (`γ*` and
+     `∂_a γ*` vanish there and `∂_a² γ*` does not), for `x = x*_n`; and no zero for `x > x*_n`;
    - for `x = 0` its zeros are exactly `a = −n`, `n ≥ 1`.
 
 *Needs:* Milestones 1–2; the intermediate value theorem and Rolle's theorem; 8.2.14 and 8.8.4 for
@@ -510,8 +599,11 @@ the sign changes.
    there. Prove 8.19.2 along the horizontal ray, 8.19.3 for `Re z > 0`, and 8.19.4 for
    `Re z > 0` and `Re p > 0`. Prove 2.11.5 as the same statement as 8.19.4. Prove the terminant
    identity 8.22.1 as `Γ(p) z^{1−p} E_p(z) = Γ(p) Γ(1 − p, z)`.
-2. **Special values and series** (DLMF 8.19.5–8.19.11, 8.4.4, 8.4.13, 8.4.15). `E₀`, `E_p(0)`
-   for `Re p > 1` as a limit along `slitPlane`, and 8.19.7 for `n ≥ 2`. Prove 8.19.8–8.19.9 for
+2. **Special values and series** (DLMF 8.19.5–8.19.11, 8.4.4, 8.4.13, 8.4.15). `E₀`. For
+   `Re p > 1`, 8.19.6 as `E_p(z) → 1/(p − 1)` as `z → 0` in `slitPlane`, so that the extension
+   `Function.update (expIntegralE p) 0 (p − 1)⁻¹` of the conventions is continuous at `0` within
+   `slitPlane ∪ {0}`, and the definition's own value at `0` is `0` for `p ≠ 1`. 8.19.7 for
+   `n ≥ 2`. Prove 8.19.8–8.19.9 for
    `n ≥ 1` with `ψ = Complex.digamma` and `z ∈ slitPlane`. Prove 8.19.10–8.19.11 for
    `p ∉ ℤ_{>0}`. Prove `Γ(0, z) = E₁(z)` (8.4.4), 8.4.13 and 8.4.15.
 3. **Recurrence, derivatives and continuation** (DLMF 8.19.12–8.19.15, 8.19.18). 8.19.12–8.19.14
@@ -523,7 +615,9 @@ the sign changes.
    Prove the parameter derivative of `γ*` at `a = 0`, `∂_a γ*(a, z)|_{a=0} = −E₁(z) − ln z`
    (8.8.14), for `z ∈ slitPlane`, from the series 8.7.1 and 8.19.8 at `n = 1`.
 4. **Continued fraction and inequalities** (DLMF 8.19.17, 8.19.19–8.19.22). 8.19.17 for
-   `z ∈ slitPlane`, via Milestone 4.1 as in 4.2. 8.19.19–8.19.22 for `n ≥ 1` and `x > 0`
+   `z ∈ slitPlane` and `p ∉ −ℕ`: it is 8.9.2 at `a = 1 − p` after the equivalence
+   transformation multiplying the odd-indexed levels by `z`, so the minimal solution of 4.2
+   (rescaled) applies; at `p ∈ −ℕ` it terminates. 8.19.19–8.19.22 for `n ≥ 1` and `x > 0`
    (with `E₀` from 8.19.5 where `n − 1 = 0`).
 5. **Integrals** (DLMF 8.19.23–8.19.27). 8.19.23 on `slitPlane` for `Re p > 1` along the ray.
    8.19.24 for `n ≥ 1` and `Re a > −1`. 8.19.25 for `Re a > −½` and `Re(p + b) > 1`, where
@@ -531,10 +625,15 @@ the sign changes.
    `ordinaryHypergeometric`.
 6. **Asymptotics** (DLMF 8.20.1–8.20.6, 2.11.6–2.11.7). 8.20.1 as an identity. 8.20.2 in
    `|ph z| ≤ 3π/2 − δ` and 8.20.3 in `π/2 + δ ≤ ±ph z ≤ 7π/2 − δ`, both in logarithmic
-   coordinates. 2.11.6–2.11.7 as the same statements. 8.20.4–8.20.5 with `A_k` the polynomials
-   of 8.20.4. 8.20.6 as `p → +∞`, uniformly for `λ ∈ [0, ∞)`.
+   coordinates. 2.11.6–2.11.7 as the same statements. 8.20.4–8.20.5: the polynomials `A_k` with
+   `A₀ = 1` and `A_{k+1}(λ) = (1 − 2kλ) A_k(λ) + λ(λ + 1) A_k′(λ)` (8.20.4), with the printed
+   values 8.20.5 as checks. 8.20.6 as `p → +∞` through real values, uniformly for
+   `λ ∈ [0, ∞)`, with `E_p(0)` the value `1/(p − 1)` of the extension in the conventions: for
+   every `n`, `e^{λp} (λ + 1) p E_p(λp) − ∑_{k<n} A_k(λ)/((λ + 1)^{2k} p^k) = O(p^{−n})`, uniformly
+   in `λ ≥ 0`. At `λ = 0` this is the exact identity
+   `p/(p − 1) = ∑_{k<n} p^{−k} + p^{−n}/(1 − p^{−1})`, since `A_k(0) = 1`.
 
-*Needs:* Milestones 1–5 (1–2 for 7.1–7.3, 4.1 for 7.4, 5.1 for 7.6); AsymptoticExpansions 1, 3
+*Needs:* Milestones 1–5 (1–2 for 7.1–7.3, 4 for 7.4, 5.1 for 7.6); AsymptoticExpansions 1, 3
 and 4; Mathlib `Complex.digamma`, `ordinaryHypergeometric`.
 
 ## Milestone 8: exponential and logarithmic integrals
@@ -542,15 +641,28 @@ and 4; Mathlib `Complex.digamma`, `ordinaryHypergeometric`.
 1. **`E₁` and `Ein`** (DLMF 6.2.1–6.2.4, 6.4.1–6.4.3, 6.11.1, 2.5.49). `Ein` is entire. On
    `slitPlane`: 6.2.1 along the horizontal ray, 6.2.2 (which is 2.5.49), and 6.2.4. In
    logarithmic coordinates, `E₁(e^w) = Ein(e^w) − w − γ` (6.4.1) is the value of
-   `expIntegralELog 1 w`; deduce 6.4.2–6.4.3. 6.11.1 is 8.4.4.
-2. **`Ei` and `li`** (DLMF 6.2.5–6.2.8, 6.5.1–6.5.2). For `x > 0`:
-   - 6.2.5, both principal-value integrals, as limits as `ε → 0+` of integrals over the
-     complement of `(−ε, ε)`;
+   `expIntegralELog 1 w`; deduce 6.4.2–6.4.3. 6.11.1 is 8.4.4. The elementary API:
+   `Ein′(z) = (1 − e^{−z})/z` for `z ≠ 0` and `Ein′(0) = 1`; `E₁′ = −e^{−z}/z` on `slitPlane`;
+   `Ein(z̄) = conj Ein(z)`, `Ein` real on the real line; `E₁(z̄) = conj E₁(z)` on `slitPlane`.
+2. **`Ei` and `li`** (DLMF 6.2.5–6.2.8, 6.5.1–6.5.2). The elementary API:
+   - `Ei` is differentiable on `x ≠ 0` with `Ei′(x) = eˣ/x`, continuous on `(−∞, 0)` and on
+     `(0, ∞)`, strictly decreasing on `(−∞, 0)` and strictly increasing on `(0, ∞)`;
+   - `Ei(x) → −∞` as `x → 0` (from either side), `Ei(x) → 0` as `x → −∞` and `Ei(x) → +∞` as
+     `x → +∞`;
+   - `li` is differentiable on `(0, 1) ∪ (1, ∞)` with `li′(x) = 1/ln x`, and `li(x) → 0` as
+     `x → 0+`.
+
+   For `x > 0`:
+   - 6.2.5, both principal-value integrals, as limits as `ε → 0+` of integrals over
+     `(−∞, x] \ (−ε, ε)`;
    - 6.2.6 and 6.2.7;
    - 6.5.1, as the limits of `E₁(−x ± iy)` as `y → 0+`;
    - 6.5.2.
 
-   `principalLogIntegral` satisfies 6.2.8 as a principal value at `t = 1` for `x > 1`, and
+   `principalLogIntegral` satisfies 6.2.8 for `x > 1` as the limit as `ε → 0+` of
+   `∫_{(0, x] \ (1 − ε, 1 + ε)} dt/ln t`, the exclusion symmetric in `t`. (The definition
+   `Ei(ln x)` corresponds to the exclusion `(e^{−ε}, e^{ε})`, symmetric in `ln t`; the two limits
+   agree because the excluded intervals differ by `O(ε²)` where the integrand is `O(1/ε)`.)
    `TauCeti.Real.logIntegral x = li(x) − li(2)` for `x > 1`.
 3. **Series and integral representations** (DLMF 6.6.1–6.6.4, 6.7.1–6.7.8, 6.10.1–6.10.3). The
    power series 6.6.1–6.6.4, with 6.6.3 using `ψ(n + 1) = Complex.digamma (n + 1)`. The
@@ -580,22 +692,32 @@ and 4; Mathlib `Complex.digamma`, `ordinaryHypergeometric`.
    entire. `Si` and `Shi` are odd and `Cin` is even. 6.2.10–6.2.11, with 6.2.11 on `slitPlane`
    along the horizontal ray as an improper integral. 6.2.13 and 6.2.16 hold by definition. Prove
    the limits 6.2.14. Prove 6.4.4–6.4.5 in logarithmic coordinates, with
-   `Ci(e^w) = −Cin(e^w) + w + γ`.
+   `Ci(e^w) = −Cin(e^w) + w + γ`. The elementary API:
+   - `Si′(z) = sin z/z`, `Cin′(z) = (1 − cos z)/z` and `Shi′(z) = sinh z/z` for `z ≠ 0`, with
+     the values `1`, `0`, `1` at `z = 0`;
+   - `Ci′(z) = cos z/z` and `Chi′(z) = cosh z/z` on `slitPlane`;
+   - `Si`, `Cin`, `Shi` commute with conjugation and are real on the real line; `Ci` and `Chi`
+     satisfy `f(z̄) = conj f(z)` on `slitPlane` and are real on `(0, ∞)`.
 2. **Auxiliary functions** (DLMF 6.2.17–6.2.21, 6.4.6–6.4.7, 6.7.12–6.7.14). Prove 6.2.19–6.2.21.
-   Prove 6.4.6–6.4.7 in logarithmic coordinates. Prove 6.7.12 for `|ph z| ≤ π` as an improper
-   integral. Prove the first integrals of 6.7.13–6.7.14 for `z ∈ slitPlane`, and the second for
-   `Re z ≥ 0` (with `z ≠ 0` for `g`).
+   Prove 6.4.6–6.4.7 in logarithmic coordinates. Prove 6.7.12 for `z ∈ slitPlane` with
+   `∫_z^∞` the improper integral along the horizontal ray `z + t`, `t ≥ 0` (which avoids `0`
+   and the cut). On the cut, `z = −x` with `x > 0` and `ph z = ±π`, prove 6.7.12 with both sides
+   taken as their limits from `slitPlane`: the left side `g(−x ± i0) + i f(−x ± i0)` is the value
+   of 6.4.6–6.4.7 at `w = ln x ± πi`, and the right side is the limit as `y → 0+` of the
+   horizontal-ray integral from `−x ± iy`. Prove the first integrals of 6.7.13–6.7.14 for
+   `z ∈ slitPlane`, and the second for `Re z ≥ 0` (with `z ≠ 0` for `g`).
 3. **Interrelations and series** (DLMF 6.5.3–6.5.7, 6.6.5–6.6.6, 6.7.9–6.7.11). 6.5.3–6.5.4 for
    `x > 0`; 6.5.5–6.5.7 for `Re z > 0`; the power series 6.6.5–6.6.6; 6.7.9–6.7.11 with the
    stated ranges.
 4. **Asymptotics** (DLMF 6.12.3–6.12.8). The remainder identities 6.12.5–6.12.8 for `Re z > 0`.
    The expansions 6.12.3–6.12.4 in `|ph z| ≤ π − δ`. The remainder bounds in `|ph z| ≤ π/4`, and
    with the factor `csc(2|ph z|)` in `π/4 ≤ |ph z| < π/2`.
-5. **Zeros** (DLMF §6.13, 6.13.2). `Ci` and `si` each have infinitely many positive zeros, simple
-   and enumerated increasingly as `c_k`, `s_k` (`k ≥ 0`, as in DLMF). Prove 6.13.2 with
-   `α = kπ`, respectively `(k + ½)π`, as an asymptotic expansion in `α⁻¹` to the stated four
-   terms. Prove the alternating remainder property: the remainder after `n` terms has the sign of
-   the `(n + 1)`th term and modulus at most its modulus, for `n ≤ 4`.
+5. **Zeros** (DLMF §6.13, 6.13.2). The positive zeros of `Ci` are all simple and are exactly
+   the values of a strictly increasing sequence `c : ℕ → (0, ∞)`; likewise `s : ℕ → (0, ∞)` for
+   `si`. So `c₀` and `s₀` are the least positive zeros, as in DLMF. Prove 6.13.2 as `k → ∞`,
+   with `α = kπ` for `c_k` and `α = (k + ½)π` for `s_k`, as an asymptotic expansion in the scale
+   `α^{1−2j}` to the stated terms. Prove the alternating remainder property: the remainder after
+   `n` terms has the sign of the `(n + 1)`th term and modulus at most its modulus, for `n ≤ 4`.
 6. **Integrals and sums** (DLMF 6.14.2–6.14.3, 6.14.5–6.14.7, 6.15.1–6.15.4). As stated, with
    `Re a > 0` for the Laplace transforms and improper integrals where DLMF's are not absolutely
    convergent.
@@ -626,7 +748,9 @@ proved here from 6.5.5 and the decay of `E₁` on the imaginary axis.
    limits along the positive axis with the stated exclusions. 8.21.14–8.21.15 hold by
    definition. 8.21.16–8.21.17 are outside the scope (spherical Bessel functions).
 4. **Auxiliary functions and asymptotics** (DLMF 8.21.18–8.21.27). 8.21.18–8.21.21. 8.21.22–8.21.23
-   for `z ∈ slitPlane` and `Re a < 1`, as improper integrals. 8.21.24–8.21.25 for `Re z > 0`.
+   for `z ∈ slitPlane` and `Re a < 1`, as improper integrals over `t ∈ (0, ∞)` with the
+   principal power `(t + z)^{a−1}`; the path `z + t` stays in `slitPlane`, and no statement is
+   made for `z` on the cut. 8.21.24–8.21.25 for `Re z > 0`.
    8.21.26–8.21.27 in `|ph z| ≤ π − δ`.
 
 *Needs:* Milestones 1, 5 and 9; AsymptoticExpansions 4.
@@ -638,8 +762,11 @@ proved here from 6.5.5 and the decay of `E₁` on the imaginary axis.
    are characterized by their derivatives and their value `0` at `0`: `erf′ = 2π^{−1/2} e^{−z²}`,
    `F′ = 1 − 2zF`, `C′ = cos(πz²/2)` and `S′ = sin(πz²/2)`.
    7.2.2 holds for `erfc` as `∫_z^∞` along the horizontal ray for `|ph z| < π/4` and for real
-   `z`. 7.2.6 holds for `ℱ` as an improper integral along the real axis. `G` (7.2.12) is
-   holomorphic on `slitPlane`.
+   `z`. 7.2.6 holds for `ℱ` as an improper integral along the real axis. The integral defining
+   `G` (7.2.12) converges absolutely for `z ∈ slitPlane`, and `G` is holomorphic there.
+   The basic theory of `F` and `Hh_n` is item 6. Conjugation:
+   `erf`, `erfc`, `F`, `C`, `S` commute with `z ↦ z̄`, `w(−z̄) = conj w(z)`, and
+   `G(z̄) = conj G(z)` on `slitPlane`.
 2. **Values at infinity and symmetry** (DLMF 7.2.4, 7.2.9, 7.4.1–7.4.8). 7.2.4 in
    `|ph z| ≤ π/4 − δ`.
    7.2.9 for the real parts. 7.4.1–7.4.8 as identities of entire functions. `C`, `S`, `F` and
@@ -654,9 +781,23 @@ proved here from 6.5.5 and the decay of `E₁` on the imaginary axis.
    Γ(b) 𝐌(a, b, ·)`). 7.11.7–7.11.8 with `Complex.regularizedHGFun` for `₁F₂`.
 5. **Incomplete Gamma special values** (DLMF 8.4.1, 8.4.3, 8.4.6, 8.4.14). 8.4.1 and 8.4.6 for
    `Re z > 0`. 8.4.3 for `z ≠ 0`. 8.4.14 for `n ∈ ℕ` and `Re z > 0`.
+6. **Dawson's integral and the repeated Gaussian integrals.** This item uses only Mathlib and
+   the two definitions, so it can be implemented before the rest of the roadmap; the parabolic
+   cylinder roadmap consumes it. `F(z) = e^{−z²} ∫₀¹ z e^{(sz)²} ds` as in the conventions, and,
+   for `n : ℕ`, `Hh_n(z) = ∫₀^∞ tⁿ/n! · e^{−(z+t)²/2} dt` over `Set.Ioi 0`. The notation
+   `Hh_{−1}(z)` abbreviates `e^{−z²/2}`; it is not an additional integer-indexed function. Prove:
+   - `F` is entire and odd, `F′ = 1 − 2zF`, `F(0) = 0`, and `F` is real on the real line;
+   - the integral defining `Hh_n` converges absolutely for every `n` and `z`, and `Hh_n` is
+     entire;
+   - `Hh₀′(z) = −e^{−z²/2}` and `Hh_{n+1}′(z) = −Hh_n(z)`;
+   - `Hh₁(z) = e^{−z²/2} − z Hh₀(z)` and `(n + 2) Hh_{n+2}(z) = Hh_n(z) − z Hh_{n+1}(z)`;
+   - `Hh_n(0) = 2^{(n−1)/2} Γ((n + 1)/2)/n!`, with `2^{(n−1)/2}` a `Real.rpow` after casting `n`
+     to `ℝ`;
+   - `Hh_n(x)` is real and positive for real `x`.
 
 *Needs:* Milestones 1, 2 and 7 (for 7.11.3); Mathlib `Polynomial.hermite`,
-`Complex.regularizedHGFun`; Tau Ceti `Erf.lean`.
+`Complex.regularizedHGFun`, Gaussian integrals and parametric differentiation of integrals; Tau
+Ceti `Erf.lean`.
 
 ## Milestone 12: integrals, inequalities and continued fractions of the error functions
 
@@ -668,12 +809,16 @@ proved here from 6.5.5 and the decay of `E₁` on the imaginary axis.
 2. **Inequalities** (DLMF 7.8.1–7.8.8). With Mills' ratio written out, 7.8.2–7.8.5 on the stated
    ranges, and 7.8.6–7.8.8. 7.8.7 includes the strict decrease of `F(x)/√(1 − e^{−2x²})` on
    `x > 0`.
-3. **Continued fractions** (DLMF 7.9.1–7.9.3). 7.9.1–7.9.2 for `Re z > 0` and 7.9.3 for
-   `Im z > 0`, via Milestone 4.1.
+3. **Continued fractions** (DLMF 7.9.1–7.9.3). 7.9.1 for `Re z > 0`: it is 8.9.2 at `a = ½`
+   and argument `z² ∈ slitPlane`, with `Γ(½, z²) = √π erfc z` (8.4.6), multiplied by `z` and
+   followed by the equivalence transformation multiplying alternate levels by `z²`. 7.9.2 for
+   `Re z > 0` as the even part of 7.9.1: prove, for a general `GenContFract`, that the
+   convergents of its even contraction are its even-indexed convergents. 7.9.3 for `Im z > 0`:
+   it is 7.9.1 at `−iz`, where `Re(−iz) > 0`, after an equivalence transformation.
 4. **Integrals** (DLMF 7.14.1–7.14.8 with 7.14.4_5). With the stated ranges, the limit at `a = 0`
    in 7.14.1, and principal square roots.
 
-*Needs:* Milestones 3.3, 4.1, 8 and 11; AsymptoticExpansions 8.1–8.2.
+*Needs:* Milestones 3.3, 4, 8 and 11; AsymptoticExpansions 8.1–8.2 and 8.6–8.7.
 
 ## Milestone 13: asymptotics and zeros of the error functions
 
@@ -683,51 +828,100 @@ proved here from 6.5.5 and the decay of `E₁` on the imaginary axis.
 2. **Fresnel auxiliary functions** (DLMF 7.12.2–7.12.7). The remainder identities 7.12.4–7.12.7
    for `|ph z| < π/4`. The expansions in `|ph z| ≤ π/2 − δ`. The remainder bounds in
    `|ph z| ≤ π/8` and with the factor `|csc(4 ph z)|` in `π/8 ≤ |ph z| < π/4`.
+An *enumeration by increasing modulus* of the zeros of `f` in a region `Ω` is a bijection
+`z : ℕ_{>0} → {ζ ∈ Ω | f ζ = 0}` with `n ↦ |z_n|` nondecreasing. Its existence includes the
+statement that the zero set in `Ω` is infinite and has no finite accumulation point. Ties in
+modulus are not excluded, and each expansion below holds for every such enumeration.
+
 3. **Zeros of `erf` and `erfc`** (DLMF §7.13(i)–(ii), 7.13.1–7.13.4):
-   - `erf` has a simple zero at `0` and infinitely many zeros in the open first quadrant, all
-     simple;
-   - its zero set is invariant under `z ↦ −z` and `z ↦ z̄`;
-   - `erfc` has infinitely many zeros in `π/2 < ph z < 3π/4`, its other zeros are their
-     conjugates, and the zeros of `w` are `iz_n` and `i z̄_n`;
-   - enumerating by increasing modulus, the expansions 7.13.1 and 7.13.3 hold to the stated
-     terms, with `λ`, `μ` from 7.13.2 and 7.13.4.
-4. **Zeros of the Fresnel integrals** (DLMF §7.13(iii)–(iv), 7.13.5–7.13.7):
-   - `C` has a simple zero and `S` a triple zero at `0`;
-   - each has infinitely many zeros in the open first quadrant, and its zero set has the
-     eightfold symmetry stated;
-   - the expansions 7.13.5 hold with 7.13.6, respectively 7.13.7;
+   - `erf` has a simple zero at `0`, no other zero on the real or imaginary axis, and
+     infinitely many zeros in the open first quadrant, all simple;
+   - the zero set of `erf` is exactly `{0} ∪ {±z_n, ±z̄_n}` for an enumeration `z_n` by
+     increasing modulus of its zeros in the open first quadrant;
+   - `erfc` has no zero outside the sectors `π/2 < ±ph z < 3π/4`; its zeros there are simple,
+     and its zero set is exactly `{z_n, z̄_n}` for an enumeration `z_n` by increasing modulus of
+     its zeros in `π/2 < ph z < 3π/4`; the zeros of `w` are exactly `iz_n` and `i z̄_n`;
+   - 7.13.1 and 7.13.3 with `λ`, `μ` from 7.13.2 and 7.13.4, as expansions with logarithmic
+     weights: writing `p₀ = ±1`, `p₁ = ∓μ/4`, `p₂ = ±(1 − μ + μ²/2)/16` and `q₀ = 1`, `q₁ = μ/4`,
+     `q₂ = (1 − μ + μ²/2)/16` (upper signs for `erf`, lower for `erfc`), for `N ≤ 3`,
+     `x_n − ∑_{j<N} p_j λ^{1−2j} = O(λ^{1−2N} (1 + |μ|)^N)` and the same for `y_n` with `q_j`,
+     as `n → ∞`.
+4. **Zeros of the Fresnel integrals** (DLMF §7.13(iii)–(iv), 7.13.5–7.13.7). The symmetry group
+   generated by `z ↦ iz` and `z ↦ z̄` has order `8`; under it `C` and `S` are conjugated or
+   multiplied by `±1` or `±i` (Milestone 11.2), so it preserves their zero sets. Prove:
+   - `C` has a simple zero and `S` a triple zero at `0`, and neither has another zero on the
+     rays `ph z ∈ (π/4)ℤ`;
+   - the zeros of each in the open sector `0 < ph z < π/4` are simple and admit an enumeration
+     `z_n` by increasing modulus;
+   - the zero set is exactly `{0}` together with the eight images of each `z_n`, which are
+     distinct; in particular the zeros in the open first quadrant are the `z_n` and the `i z̄_n`;
+   - 7.13.5 with 7.13.6 for `C`, respectively 7.13.7 for `S`, for the `z_n` of this sector:
+     with `p₀ = 1`, `p₁ = α(απ − 4)/(8π)` and `q₀ = α/2`,
+     `x_n − ∑_{j<N} p_j λ^{1−4j} = O(λ^{1−4N}(1 + |α|)^{2N})` for `N ≤ 2`, and
+     `y_n − q₀ λ^{−1} = O(λ^{−5}(1 + |α|)³)`;
    - if `z_n` is a zero of `erfc`, then `(1 + i) z_n/√π` is a zero of `ℱ`.
 5. **The incomplete Gamma functions near the transition point** (DLMF 8.11.10–8.11.11). With
    `x = a + (2a)^{1/2} y`, both formulas hold as `a → +∞`, uniformly for `y` in compact subsets
-   of `ℝ`, with `erfc` and Dawson's integral of Milestone 11. The proof is Laplace's method
-   (AsymptoticExpansions 5) on the integral 8.2.1 after the substitution `t = a + (2a)^{1/2} s`.
+   of `ℝ`, with `erfc` and Dawson's integral; each is stated as a normalized remainder that is
+   `O(a^{−1})` uniformly on each bounded real `y`-set:
+   - **8.11.10.** `P(a + 1, x) − ½ erfc(−y) + ⅓ √(2/(πa)) (1 + y²) e^{−y²} = O(a^{−1})`. Route:
+     8.2.1 for `γ(a + 1, x)`, the substitution `t = a + (2a)^{1/2} s` and Stirling for
+     `Γ(a + 1)` reduce it to a Gaussian integral with a moving upper endpoint `y`. The
+     intermediate target is the uniform estimate: with
+     `h_a(s) = a log(1 + s√(2/a)) − s√(2a)`, there are `C`, `c > 0` such that
+     `|e^{h_a(s)} − e^{−s²}(1 + (2√2/3) s³ a^{−1/2})| ≤ C a^{−1}(1 + s⁶) e^{−cs²}` for
+     `−√(a/2) < s ≤ Y` and `a ≥ a₀(Y)`. This is not the fixed-endpoint theorem of
+     AsymptoticExpansions 5, and is proved here.
+   - **8.11.11.** `x^{1−a} γ*(1 − a, −x) + cos πa − (sin πa/π)(2√π F(y) + ⅔ √(2π/a)(1 − y²)) e^{y²}
+     = O(a^{−1})`. The integral 8.2.1 does not apply, since `Re(1 − a) < 0`. Route: the circle
+     form of 3.2, `γ*(b, ζ) = (Γ(1 − b)/(2π)) ∫_{−π}^{π} e^{ibθ + ζe^{iθ}} dθ` for `b ∉ ℤ_{>0}`
+     (8.6.8 with 8.2.6, extended to all such `b` by analytic continuation in `b`), at
+     `b = 1 − a`, `ζ = −x`. The phase `−x e^{iθ} − iaθ` has its saddle at `θ = ±π`, where
+     `e^{−iaθ}` jumps. Shifting to `θ = π − φ` on `(0, 2π)` gives two half-line Gaussian
+     integrals with a linear imaginary term in the exponent. Their two-term expansion,
+     uniform for bounded `y`, produces the Dawson term. The needed intermediate target is
+     that two-term half-line Gaussian estimate, with remainder `O(a^{−1})`.
 
-*Needs:* Milestones 1, 5, 11 and 12; AsymptoticExpansions 2 (for the zeros), 4, and 5 (for 13.5);
-the argument principle (or Rouché's theorem) for counting zeros near the asymptotic positions,
-with Mathlib's `circleIntegral`.
+*Needs:* Milestones 1, 3.2, 5, 11 and 12; AsymptoticExpansions 1 and 2 (for the zeros), 4, and
+5 (for the Gaussian estimates of 13.5); ZerosOfLFunctions §1.2 (Stirling for `Γ(a + 1)`); for
+counting zeros near their asymptotic positions, the argument principle through ContourIntegration
+residues (`TauCeti.Contour.residue`), with Rouché's theorem derived from it here if used.
 
 ## Milestone 14: inverse error functions, repeated integrals and Voigt functions
 
 1. **Inverse error functions** (DLMF 7.17.1–7.17.6). `inverf` is `Real.erfInv` and `inverfc x` is
    `Real.erfInv (1 − x)`. Prove 7.17.2 for `|x| < 1`, with the coefficients defined by the
    recursion 7.17.2_5 and the four printed coefficients as checks. Prove 7.17.3–7.17.6 as
-   `x → 0+`, with `u`, `v` from 7.17.5–7.17.6, as an asymptotic expansion to the stated terms in
-   the scale `u^{k−1/2}`.
-2. **Repeated integrals** (DLMF 7.18.1–7.18.9, 7.18.13–7.18.14). `iⁿ erfc` is entire for each `n`.
-   Prove:
+   `x → 0+`, with `u`, `v` from 7.17.5–7.17.6, as a generalized expansion with logarithmic
+   weights. The coefficients `a_k` of 7.17.4 are polynomials in `v`, and `v → ∞`, so this is not
+   a Poincaré expansion in the scale `u^{k−1/2}`. With `c₀ = 1`, `c₁ = 0`, `c₂ = v/8`,
+   `c₃ = −(v² + 6v − 6)/32` and `c₄ = (4v³ + 27v² + 108v − 300)/384`, for `N ≤ 5`:
+   `inverfc x − ∑_{j<N} c_j(v) u^{j−1/2} = O(u^{N−1/2} (1 + |v|)^N)` as `x → 0+`.
+2. **Repeated integrals** (DLMF 7.18.1–7.18.9, 7.18.11–7.18.14). `iⁿ erfc` is entire for each
+   `n`, and its defining integral converges absolutely for every `z`. Prove:
+   - `i⁰ erfc = erfc`, `iⁿ erfc(0) = 1/(2ⁿ Γ(n/2 + 1))` (7.18.3), and
+     `(iⁿ⁺¹ erfc)′ = −iⁿ erfc` for `n ≥ 0`, with `(i⁰ erfc)′ = −(2/√π) e^{−z²}`;
    - 7.18.1–7.18.2, with the iterated-integral form along the horizontal ray;
    - 7.18.3–7.18.4;
    - 7.18.5 for `n ≥ 1`;
    - 7.18.6–7.18.7, with 7.18.7 at `n = 1` using `i⁻¹ erfc` written out;
    - 7.18.8 with `H_n` through `Polynomial.hermite`;
    - 7.18.9 with `𝐌`;
-   - 7.18.13 for `Re z > 0`, via Milestone 4.1;
+   - 7.18.12, `iⁿ erfc(z) = (2^{n−1}π)^{−1/2} Hh_n(√2 z)`, with `Hh_n` of 11.6 (the
+     substitution `t = s/√2` in 7.18.2);
+   - 7.18.13 for `n ≥ 1` and `Re z > 0`, via Milestone 4.1. With `e_k = i^{n−1+k} erfc(z)`, the
+     fraction has `b_k = z`, `a₁ = ½` and `a_k = (n + k − 1)/2` (`k ≥ 2`), and its minimal solution
+     is `f(0) = n e₀`, `f(k) = (−1)^k (n)_k e_k` (`k ≥ 1`), so `−f(1)/f(0) = e₁/e₀`; the recurrence
+     is 7.18.7. Minimality follows from the criterion of 4.1, with the large-`k` behaviour of
+     `e_k` from 7.18.2 by Laplace's method (AsymptoticExpansions 5);
    - 7.18.14 in `|ph z| ≤ 3π/4 − δ`.
-3. **Voigt functions** (DLMF 7.19.1–7.19.11). For `t > 0`: 7.19.3 with `z = (1 − ix)/(2√t)`;
-   7.19.4 for `a > 0`; 7.19.5 as `t → 0+`; 7.19.6–7.19.9; and 7.19.10–7.19.11 for `a > 0` and
-   real `u`.
+3. **Voigt functions** (DLMF 7.19.1–7.19.11). The integrals 7.19.1, 7.19.2 and 7.19.4 converge
+   absolutely for `t > 0`, respectively `a > 0`, and define functions continuous in `(x, t)` on
+   `ℝ × (0, ∞)`, respectively in `(a, u)` on `(0, ∞) × ℝ`. For `t > 0`: 7.19.3 with
+   `z = (1 − ix)/(2√t)`; 7.19.4 for `a > 0`; 7.19.5 as `t → 0+`; 7.19.6–7.19.9; and
+   7.19.10–7.19.11 for `a > 0` and real `u`.
 
-*Needs:* Milestones 4, 11 and 13; AsymptoticExpansions 2; Tau Ceti `Real.erfInv`,
+*Needs:* Milestones 4, 11 and 13; AsymptoticExpansions 1, 2 and 5; Tau Ceti `Real.erfInv`,
 `hasDerivAt_erfInv`.
 
 ## Milestone 15: incomplete Beta functions
@@ -747,14 +941,28 @@ with Mathlib's `circleIntegral`.
 3. **Recurrences** (DLMF 8.17.11–8.17.21). All, for `a, b > 0` and `0 ≤ x ≤ 1`, with the parameters
    in each formula positive. 8.17.20 is Tau Ceti's `regularizedIncompleteBeta_add_one_left`, and
    is not restated.
-4. **Continued fraction** (DLMF 8.17.22–8.17.23). Convergence for `0 ≤ x < 1`, via Milestone 4.1.
+4. **Continued fraction** (DLMF 8.17.22–8.17.23). Convergence to the stated value for
+   `0 ≤ x < 1`, via Milestone 4.1; at `x = 0` every `d_m` vanishes and the fraction is `1`. For
+   `0 < x < 1`, with `g_n = F(a + b + ⌊n/2⌋, ⌈n/2⌉; a + n; x)` (Mathlib's
+   `ordinaryHypergeometric`), prove the contiguous relations `g_{n−1} = g_n + d_n g_{n+1}`
+   (`n ≥ 1`). Then `g₀ = 1`, `g₁ = F(a + b, 1; a + 1; x)` gives the value through 8.17.8, and
+   `f(n) = (−1)ⁿ d₁⋯d_{n−1} g_n` is the minimal solution with `f(0) = 1` for the fraction with
+   `a₁ = 1`, `a_{n+1} = d_n` and `b_n = 1`. Minimality follows from the criterion of 4.1 and
+   `g_{n+1}/g_n → 2/(1 + √(1 − x))`, the smaller of the characteristic roots
+   `2(1 ∓ √(1 − x))/x` of the limiting recurrence. Prove this limit by applying
+   AsymptoticExpansions 12.1 to the two-step recurrences of `(g_{2k})` and `(g_{2k+1})`, whose
+   coefficients are rational in `k` with limits having the distinct characteristic roots
+   `(2(1 ∓ √(1 − x))/x)²`, together with a growth bound `g_n = O(Rⁿ)` for some
+   `R < 2(1 + √(1 − x))/x`, which selects the smaller root.
    DLMF's bracketing of the convergents is not owned; see
    [Beyond this roadmap](#beyond-this-roadmap-a-roadmap-for-a-roadmap-do-not-implement).
-5. **Large `a`, fixed `b` and `x`** (DLMF 8.18.1). For each `n`, with the `O`-term uniform in `a`.
-   For `b ∈ ℤ_{>0}` and `n ≥ b` the formula is exact.
+5. **Large `a`, fixed `b` and `x`** (DLMF 8.18.1). For fixed `b > 0`, `0 < x < 1` and each `n`,
+   the normalized remainder `Γ(a + n + 1) (I_x(a, b)/(Γ(a + b) x^a (1 − x)^{b−1}) − S_n)`, with
+   `S_n = ∑_{k<n} (x/(1 − x))^k/(Γ(a + k + 1) Γ(b − k))`, is bounded as `a → +∞`, with
+   `1/Γ(b − k)` Mathlib's entire reciprocal. For `b ∈ ℤ_{>0}` and `n ≥ b` it is exactly `0`.
 
-*Needs:* Milestones 3.3 and 4.1; Tau Ceti `IncompleteBeta.lean` and `Beta.lean`; Mathlib
-`ordinaryHypergeometric`, `ProbabilityTheory.beta`.
+*Needs:* Milestones 3.3 and 4.1; AsymptoticExpansions 12.1; Tau Ceti `IncompleteBeta.lean` and
+`Beta.lean`; Mathlib `ordinaryHypergeometric`, `ProbabilityTheory.beta`.
 
 ## Beyond this roadmap (a roadmap for a roadmap; do not implement)
 
@@ -763,12 +971,11 @@ Contributors should not attempt it under this roadmap.
 - **Formulas through Kummer's second function `U` and Whittaker functions**: DLMF 6.11.2–6.11.3,
   7.11.5, 7.18.10, 8.5.3–8.5.5, 8.19.16. They belong to a confluent hypergeometric roadmap
   (DLMF Chapter 13).
+- **The relation to the parabolic cylinder functions**: DLMF 7.18.11. It is 7.18.12 combined with
+  `U(n + ½, z) = e^{z²/4} Hh_n(z)` (DLMF 12.7.7), and belongs to the parabolic cylinder roadmap.
 - **Formulas through modified and spherical Bessel functions, Laguerre and Chebyshev
   polynomials**: DLMF 6.7.15–6.7.16, 6.10.4–6.10.8, 7.6.8–7.6.11, 8.6.6, 8.7.4–8.7.6,
   8.21.16–8.21.17. They belong to Bessel-function and orthogonal-polynomial roadmaps.
-- **Relations to the parabolic cylinder functions**: DLMF 7.18.11–7.18.12. They belong to
-  whichever of this roadmap and the parabolic cylinder roadmap is implemented second, since they
-  need both `iⁿ erfc` and `U(a, z)`, `Hh_n`.
 - **The continued Gauss function**: DLMF 8.14.5–8.14.6, 8.17.9 and 8.19.25 outside the unit disc
   of the hypergeometric argument. They belong to a hypergeometric roadmap (DLMF Chapter 15).
 - **The Hurwitz zeta function at complex shift**: DLMF 8.15.2.
@@ -785,8 +992,9 @@ Contributors should not attempt it under this roadmap.
   `b = 3.3`, `x = 0.3` the convergents built from `d_1, …, d_n` exceed `I_x(a, b)` for every
   `n ≥ 5`, although half of them should lie below it. The range of indices for which it holds
   must be established before it can be specified.
-- **The double zeros of `γ*(a, x)`** (DLMF Table 8.13.1) and their complex trajectories, and the
-  `λ`-zeros of §8.13(ii).
+- **The numerical values of the double zeros of `γ*(a, x)`** (DLMF Table 8.13.1), the complex
+  trajectories of the `a`-zeros, and the `λ`-zeros of §8.13(ii). The existence and multiplicity
+  of the double zero at `x = x*_n` are owned (Milestone 6.2).
 - **Numerical tables of zeros** (DLMF Tables 7.13.1–7.13.4, the 30-digit values of `c₁`, `c₂` and
   `x₀`).
 - **Number theory**: von Koch's theorem 6.16.5, `li(x) − π(x) = O(√x ln x)` under the Riemann
