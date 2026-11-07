@@ -167,6 +167,42 @@ def incompleteAiryAi (a z : ℂ) : ℂ :=
 /-- The Airy kernel `K_Ai(x, y) = ∫₀^∞ Ai(x + t) Ai(y + t) dt`. -/
 def airyKernel (x y : ℝ) : ℝ := ∫ t in Ioi (0 : ℝ), Real.airyAi (x + t) * Real.airyAi (y + t)
 
+/-- The order `p = 1/(n + 2)` of the generalized Airy functions (DLMF 9.13.3). -/
+def generalizedAiryOrder (n : ℕ) : ℝ := 1 / (n + 2)
+
+/-- Swanson and Headley's `A_n`, pinned by its series (DLMF 9.13.4 and README 9.1). -/
+def generalizedAiryA (n : ℕ) (z : ℂ) : ℂ :=
+  let p : ℂ := generalizedAiryOrder n
+  p ^ (1 - p) * 𝐅(1 - p) (p ^ 2 * z ^ (n + 2)) - p ^ (1 + p) * z * 𝐅(1 + p) (p ^ 2 * z ^ (n + 2))
+
+/-- Swanson and Headley's `B_n`, pinned by its series (DLMF 9.13.4 and README 9.1). -/
+def generalizedAiryB (n : ℕ) (z : ℂ) : ℂ :=
+  let p : ℂ := generalizedAiryOrder n
+  p ^ (1 / 2 : ℂ) *
+    (p ^ (-p) * 𝐅(1 - p) (p ^ 2 * z ^ (n + 2)) + p ^ p * z * 𝐅(1 + p) (p ^ 2 * z ^ (n + 2)))
+
+/-- Reid's integrand `t^{−p} exp(z t − t³/3)` in the logarithmic variable `t = e^w`. -/
+def reidKernel (z p w : ℂ) : ℂ := cexp (-p * w + z * cexp w - cexp (3 * w) / 3)
+
+/-- The integral over the path `C(α, β)` of README 9.5: in along `ph t = α`, along the unit circle
+from `α` to `β`, and out along `ph t = β`. -/
+def reidPath (z p : ℂ) (α β : ℝ) : ℂ :=
+  -(∫ r in Ioi (1 : ℝ), cexp (α * I) * reidKernel z p (Real.log r + α * I)) +
+    (∫ θ in α..β, I * cexp (θ * I) * reidKernel z p (θ * I)) +
+    ∫ r in Ioi (1 : ℝ), cexp (β * I) * reidKernel z p (Real.log r + β * I)
+
+/-- Reid's `A_k(z, p)` (DLMF 9.13.25); the index `k : Fin 3` is DLMF's `k − 1`. -/
+def reidAiryA (k : Fin 3) (z p : ℂ) : ℂ :=
+  (2 * π * I)⁻¹ *
+    match k with
+    | 0 => reidPath z p (4 * π / 3) (2 * π / 3)
+    | 1 => reidPath z p (2 * π) (4 * π / 3)
+    | 2 => reidPath z p (2 * π / 3) 0
+
+/-- Reid's `B₀(z, p)` for integer `p` (DLMF 9.13.26). -/
+def reidAiryB0 (z : ℂ) (p : ℤ) : ℂ :=
+  (2 * π * I)⁻¹ * ∫ θ in (0 : ℝ)..(2 * π), I * cexp (θ * I) * reidKernel z p (θ * I)
+
 /-! ### Layer 1: definitions, Airy's equation and connection formulas -/
 
 /-- **1.1** `Ai` is entire. -/
@@ -213,6 +249,27 @@ theorem airyBi_eq_airyAi_rotations (z : ℂ) :
 
 /-- **1.6** `Ai` is real on the real line. -/
 theorem ofReal_real_airyAi (x : ℝ) : ((Real.airyAi x : ℝ) : ℂ) = airyAi x := sorry
+
+/-- **1.7** `Ai(−z) = (√z/3)(J_{1/3}(ζ) + J_{−1/3}(ζ))` for `|ph z| < 2π/3` (DLMF 9.6.6). -/
+theorem airyAi_neg_eq_besselJ {z : ℂ} (hz0 : z ≠ 0) (hz : |arg z| < 2 * π / 3) :
+    airyAi (-z) = z ^ (1 / 2 : ℂ) / 3 *
+      (Complex.besselJ (1 / 3) ζ[z] + Complex.besselJ (-(1 / 3)) ζ[z]) := sorry
+
+/-- **1.7** Kummer's second transformation `e^{−x} 𝐌(a, 2a, 2x) = Γ(a + ½) Γ(2a)⁻¹ 𝐅(a + ½, x²/4)`,
+auxiliary for DLMF 9.6.25–9.6.26. -/
+theorem exp_neg_mul_kummer_two_mul {a : ℂ} (ha : ∀ k : ℕ, 2 * a ≠ -k) (x : ℂ) :
+    cexp (-x) * 𝐌(a, 2 * a) (2 * x) =
+      Gamma (a + 1 / 2) / Gamma (2 * a) * 𝐅(a + 1 / 2) (x ^ 2 / 4) := sorry
+
+/-- **1.7** `Bi` through Kummer's function (DLMF 9.6.25), with `₁F₁(a; b; x) = Γ(b) 𝐌(a, b, x)` and
+`ζ^{2/3}` read as `(2/3)^{2/3} z`. -/
+theorem airyBi_eq_kummer (z : ℂ) :
+    airyBi z =
+      cexp (-ζ[z]) * (Gamma (1 / 3) * 𝐌(1 / 6, 1 / 3) (2 * ζ[z])) /
+          ((3 : ℂ) ^ (1 / 6 : ℂ) * Gamma (2 / 3)) +
+        (3 : ℂ) ^ (5 / 6 : ℂ) * ((2 / 3 : ℂ) ^ (2 / 3 : ℂ) * z) * cexp (-ζ[z]) *
+          (Gamma (5 / 3) * 𝐌(5 / 6, 5 / 3) (2 * ζ[z])) / ((2 : ℂ) ^ (2 / 3 : ℂ) * Gamma (1 / 3)) :=
+  sorry
 
 /-! ### Layer 2: integral representations -/
 
@@ -272,6 +329,12 @@ theorem isBigO_airyAi_neg_sub_osc {δ : ℝ} (hδ : 0 < δ) (hδπ : δ < 2 * π
 /-- **3.5** The error bound of DLMF 9.7.17 in the sector `|ph z| ≤ π/3`. -/
 theorem norm_airyRemainderAi_le {z : ℂ} (hz : z ≠ 0) (harg : |arg z| ≤ π / 3) (n : ℕ) :
     ‖airyRemainderAi n z‖ ≤ airyU n * ‖ζ[z]‖ ^ (-(n : ℤ)) := sorry
+
+/-- **3.5** On the positive axis the error of DLMF 9.7.5 is bounded by the first neglected term
+and has its sign. -/
+theorem airyRemainderAi_real_eq {x : ℝ} (hx : 0 < x) (n : ℕ) :
+    ∃ θ ∈ Icc (0 : ℝ) 1, airyRemainderAi n x =
+      ((θ * ((-1) ^ n * airyU n * Real.airyZeta x ^ (-(n : ℤ))) : ℝ) : ℂ) := sorry
 
 /-- **3.6** `Ai` is, up to a factor, the only real solution of Airy's equation that tends to
 `0` at `+∞`. -/
@@ -347,6 +410,11 @@ theorem scorerHi_mellin_barnes {z : ℂ} (hz0 : z ≠ 0) (hz : |arg (-z)| < 2 * 
           cexp ((σ + y * I) * (Complex.log 3 / 3 + Complex.log (-z))) =
         2 * π ^ 2 * (3 : ℂ) ^ (2 / 3 : ℂ) * scorerHi z := sorry
 
+/-- **6.7** The energy `E = Gi′² − x Gi² + 2 Gi/π` has derivative `−Gi²`. -/
+theorem hasDerivAt_scorerGi_energy (x : ℝ) :
+    HasDerivAt (fun t => deriv Real.scorerGi t ^ 2 - t * Real.scorerGi t ^ 2 +
+      2 * Real.scorerGi t / π) (-(Real.scorerGi x ^ 2)) x := sorry
+
 /-! ### Layer 7: integrals -/
 
 /-- **7.1** Gauss's triplication formula (DLMF 5.5.6 with `m = 3`). -/
@@ -370,7 +438,31 @@ theorem airyAi_mellin {α : ℂ} (hα : 0 < α.re) :
     ∫ t in Ioi (0 : ℝ), (t : ℂ) ^ (α - 1) * airyAi t =
       Gamma α / ((3 : ℂ) ^ ((α + 2) / 3) * Gamma (α / 3 + 2 / 3)) := sorry
 
+/-- **7.6** The Sokhotski–Plemelj formula on `(0, ∞)`, from the upper half-plane. -/
+theorem tendsto_cauchyIntegral_Ioi {f : ℝ → ℂ} {s₀ : ℝ} (hs₀ : 0 < s₀)
+    (hf : IntegrableOn (fun s => f s / (1 + s)) (Ioi 0))
+    (hC1 : ∃ ε > 0, ContDiffOn ℝ 1 f (Ioo (s₀ - ε) (s₀ + ε))) :
+    ∃ L : ℂ,
+      Tendsto (fun ε : ℝ => ∫ s in Ioi (0 : ℝ) \ Ioo (s₀ - ε) (s₀ + ε), f s / (s - s₀))
+        (𝓝[>] 0) (𝓝 L) ∧
+      Tendsto (fun w : ℂ => ∫ s in Ioi (0 : ℝ), f s / (s - w))
+        (𝓝[{w : ℂ | 0 < w.im}] (s₀ : ℂ)) (𝓝 (L + π * I * f s₀)) := sorry
+
 /-! ### Layer 8: products -/
+
+/-- **8.1** An entire solution of `w‴ − 4z w′ − 2w = 0` is determined by `w(0)`, `w′(0)`,
+`w″(0)`. -/
+theorem eq_of_productEquation {f g : ℂ → ℂ} (hf : Differentiable ℂ f) (hg : Differentiable ℂ g)
+    (hfe : ∀ z, deriv^[3] f z - 4 * z * deriv f z - 2 * f z = 0)
+    (hge : ∀ z, deriv^[3] g z - 4 * z * deriv g z - 2 * g z = 0)
+    (h₀ : f 0 = g 0) (h₁ : deriv f 0 = deriv g 0) (h₂ : deriv^[2] f 0 = deriv^[2] g 0) :
+    f = g := sorry
+
+/-- **8.3** `Ai(x)² = (4π√3)⁻¹ ∫₀^∞ J₀(t³/12 + x t) t dt` for `x ≥ 0`, as an improper integral
+(DLMF 9.11.3). -/
+theorem airyAi_sq_eq_besselJ_integral {x : ℝ} (hx : 0 ≤ x) :
+    Tendsto (fun R : ℝ => ∫ t in (0 : ℝ)..R, Complex.besselJ 0 ((t : ℂ) ^ 3 / 12 + x * t) * t)
+      atTop (𝓝 ((4 * π * √3 * Real.airyAi x ^ 2 : ℝ) : ℂ)) := sorry
 
 /-- **8.3** `Ai(x)² = 2^{2/3} π⁻¹ ∫₀^∞ Ai(2^{2/3}(x + t²)) dt`. -/
 theorem airyAi_sq_eq_integral (x : ℝ) :
@@ -381,5 +473,42 @@ theorem airyAi_sq_eq_integral (x : ℝ) :
 theorem airyKernel_eq_of_ne {x y : ℝ} (hxy : x ≠ y) :
     airyKernel x y = (Real.airyAi x * deriv Real.airyAi y - deriv Real.airyAi x *
       Real.airyAi y) / (x - y) := sorry
+
+/-! ### Layer 9: generalized Airy functions -/
+
+/-- **9.1** `A_n″ = zⁿ A_n` (DLMF 9.13.1). -/
+theorem generalizedAiryA_ode (n : ℕ) (z : ℂ) :
+    deriv^[2] (generalizedAiryA n) z = z ^ n * generalizedAiryA n z := sorry
+
+/-- **9.1** `𝒲{A_n, B_n} = (2/π) p^{1/2} sin(pπ)` (DLMF 9.13.8). -/
+theorem generalizedAiry_wronskian (n : ℕ) (z : ℂ) :
+    generalizedAiryA n z * deriv (generalizedAiryB n) z -
+        deriv (generalizedAiryA n) z * generalizedAiryB n z =
+      ((2 / π * √(generalizedAiryOrder n) * Real.sin (generalizedAiryOrder n * π) : ℝ) : ℂ) :=
+  sorry
+
+/-- **9.3** The integral representation of `A_n` for `|ph z| < pπ`, with
+`ζ = 2p z^{(n+2)/2}`. -/
+theorem generalizedAiryA_eq_integral (n : ℕ) {z : ℂ} (hz0 : z ≠ 0)
+    (hz : |arg z| < generalizedAiryOrder n * π) :
+    generalizedAiryA n z =
+      2 * generalizedAiryOrder n / π * Real.sin (generalizedAiryOrder n * π) * z ^ (1 / 2 : ℂ) *
+        ∫ u in Ioi (0 : ℝ), cexp (-(2 * generalizedAiryOrder n * z ^ (((n : ℂ) + 2) / 2)) *
+          Real.cosh u) * Real.cosh (generalizedAiryOrder n * u) := sorry
+
+/-- **9.3** The leading behaviour of `A_n` in `|ph z| ≤ 3pπ − δ` (DLMF 9.13.9). -/
+theorem isBigO_generalizedAiryA_sub (n : ℕ) {δ : ℝ} (hδ : 0 < δ)
+    (hδp : δ < 3 * generalizedAiryOrder n * π) :
+    (fun z => generalizedAiryA n z -
+        √(generalizedAiryOrder n / π) * Real.sin (generalizedAiryOrder n * π) *
+          z ^ (-(n : ℂ) / 4) * cexp (-(2 * generalizedAiryOrder n * z ^ (((n : ℂ) + 2) / 2))))
+      =O[sectorAtTop (3 * generalizedAiryOrder n * π - δ)]
+        fun z => ‖z ^ (-(n : ℂ) / 4) * cexp (-(2 * generalizedAiryOrder n *
+          z ^ (((n : ℂ) + 2) / 2)))‖ * ‖2 * generalizedAiryOrder n * z ^ (((n : ℂ) + 2) / 2)‖⁻¹ :=
+  sorry
+
+/-- **9.5** `A₁ + A₂ + A₃ + B₀ = 0` for integer `p` (DLMF 9.13.34). -/
+theorem reidAiry_connection_sum (z : ℂ) (p : ℤ) :
+    reidAiryA 0 z p + reidAiryA 1 z p + reidAiryA 2 z p + reidAiryB0 z p = 0 := sorry
 
 end TauCetiRoadmap.SpecialFunctionsAiry
